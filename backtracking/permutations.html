@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>All Permutations of a String — Backtracking · RecursionVerse</title>
+  <meta name="description" content="All permutations of a string with backtracking: input/output (pass by value) vs swapping in place (pass by reference), duplicate handling, animated state-space tree, CLRS pseudocode, C++/Java/Python.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="backtracking"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Backtracking</a><span>/</span><span>Permutations</span></div>
+      <div class="eyebrow">Problem 01 · strings</div>
+      <h1>All Possible Permutations of a String</h1>
+      <div class="chips mt-1"><span class="chip medium">Medium</span><span class="chip accent">backtracking</span><span class="chip cyan">pass by value vs reference</span><span class="chip">O(n · n!)</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/permutations-of-a-given-string2041/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Distinct Permutations</a>
+        <a class="plink" href="https://leetcode.com/problems/permutations/" target="_blank" rel="noopener"><span class="dot dot-lc"></span>LeetCode 46</a>
+        <a class="plink" href="https://leetcode.com/problems/permutations-ii/" target="_blank" rel="noopener"><span class="dot dot-lc"></span>LeetCode 47 (duplicates)</a>
+        <a class="plink" href="https://cses.fi/problemset/task/1622" target="_blank" rel="noopener"><span class="dot dot-cses"></span>CSES · Creating Strings</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <div class="prose problem-statement">
+          <p>Given a string <code>s</code> of length <code>n</code>, print <strong>every arrangement</strong> (permutation) of its characters. Follow-up: if <code>s</code> contains repeated characters, print each <strong>distinct</strong> arrangement only once.</p>
+        </div>
+        <div class="grid grid-2 mt-2">
+          <div class="example"><span class="k">Input :</span> s = "abc"
+<span class="k">Output:</span> <span class="o">abc acb bac bca cba cab</span>
+<span class="k">Why   :</span> 3! = 6 arrangements</div>
+          <div class="example"><span class="k">Input :</span> s = "aab"
+<span class="k">Output:</span> <span class="o">aab aba baa</span>
+<span class="k">Why   :</span> 3! / 2! = 3 distinct arrangements</div>
+        </div>
+        <p class="muted mt-2"><strong>Constraints:</strong> 1 ≤ n ≤ 9 (n! grows fast: 9! = 362,880).</p>
+      </section>
+
+      <section class="section-tight" id="identify" data-toc="Why backtracking?">
+        <h2>Why backtracking?</h2>
+        <div class="checklist">
+          <div class="ck"><div><h4>Choices + decisions</h4><p>Position 0 can hold any of n letters, position 1 any of the remaining n−1, … <span class="yes">✓</span></p></div></div>
+          <div class="ck"><div><h4>“All possible”</h4><p>We must list every arrangement, not the best one — so no DP. <span class="yes">✓</span></p></div></div>
+          <div class="ck"><div><h4>Variable number of choices</h4><p>The number of candidates shrinks each level: n, n−1, …, 1 — a loop, not two fixed calls. <span class="yes">✓</span></p></div></div>
+          <div class="ck"><div><h4>Tiny constraints</h4><p>n ≤ 9 — the output alone is n! strings, so exponential time is unavoidable. <span class="yes">✓</span></p></div></div>
+        </div>
+      </section>
+
+      <section class="section" id="pattern" data-toc="Map to the template">
+        <h2>Map it onto the template</h2>
+        <p class="muted">Approach B (swapping in place) filled into the six slots of the <a href="index.html#template">universal template</a>:</p>
+        <div class="map-grid mt-2">
+          <div class="map-row" style="--c:var(--s-change)"><span class="k">Shared state</span><span class="v">the string <code>s</code> (by reference) and <code>idx</code> = the position we are filling. Positions <code>&lt; idx</code> are already fixed.</span></div>
+          <div class="map-row" style="--c:var(--s-base)"><span class="k">Base case</span><span class="v"><code>idx == n</code> → every position is fixed → record <code>s</code>.</span></div>
+          <div class="map-row" style="--c:var(--s-choice)"><span class="k">Choices</span><span class="v">any letter still in the unfixed suffix: <code>i = idx … n−1</code>.</span></div>
+          <div class="map-row" style="--c:var(--s-valid)"><span class="k">isValid</span><span class="v">always valid for distinct letters; with duplicates, skip <code>s[i]</code> if that letter was already placed at <code>idx</code> in this loop.</span></div>
+          <div class="map-row" style="--c:var(--s-change)"><span class="k">Change</span><span class="v"><code>swap(s[idx], s[i])</code> — bring the chosen letter to position <code>idx</code>.</span></div>
+          <div class="map-row" style="--c:var(--s-recurse)"><span class="k">Recurse</span><span class="v"><code>permute(s, idx + 1)</code></span></div>
+          <div class="map-row" style="--c:var(--s-revert)"><span class="k">Revert</span><span class="v"><code>swap(s[idx], s[i])</code> again — the shared string is back to how the loop found it.</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="visualize" data-toc="Visualize it">
+        <h2>Visualize it</h2>
+        <p class="muted">Switch between the two approaches and watch the <strong>memory</strong> panel: approach A keeps a copy of <code>ip</code>/<code>op</code> in every frame, approach B has one array with two pointers. Try:
+          <button class="btn btn-sm" type="button" data-perm-preset="abc" data-dedupe="0" data-mode="swap">abc · swap</button>
+          <button class="btn btn-sm" type="button" data-perm-preset="aab" data-dedupe="0" data-mode="swap">aab · duplicates!</button>
+          <button class="btn btn-sm" type="button" data-perm-preset="aab" data-dedupe="1" data-mode="swap">aab · skip duplicates</button>
+          <button class="btn btn-sm" type="button" data-perm-preset="abc" data-dedupe="0" data-mode="ipop">abc · ip/op</button>
+        </p>
+        <div id="viz-perm" class="mt-2"></div>
+      </section>
+
+      <section class="section" id="approaches" data-toc="Two approaches">
+        <h2>Two approaches, two memory models</h2>
+        <div class="compare">
+          <div class="card vs-card">
+            <h4><span class="chip cyan">A</span> input / output — answer at the leaf</h4>
+            <p class="muted">Keep an <em>input</em> <code>ip</code> of unused letters and an <em>output</em> <code>op</code> built so far. Move one letter from <code>ip</code> to <code>op</code> and recurse on the <strong>new copies</strong>. When <code>ip</code> is empty, <code>op</code> is a finished permutation.</p>
+            <div class="example" style="font-size:.8rem">abc | ""
+├─ a → bc | a  ─┬─ b → c | ab → abc
+│               └─ c → b | ac → acb
+├─ b → ac | b  ─┬─ a → c | ba → bac
+│               └─ c → a | bc → bca
+└─ c → ab | c  ─┬─ a → b | ca → cab
+                └─ b → a | cb → cba</div>
+            <ul class="mt-2"><li>No undo (pass by value).</li><li>Every call builds two new strings → O(n) extra work per call.</li><li>Output order is lexicographic when the input is sorted.</li></ul>
+          </div>
+          <div class="card vs-card">
+            <h4><span class="chip pink">B</span> swap in place — answer in the path</h4>
+            <p class="muted">Fix positions left to right. At position <code>idx</code>, swap every candidate <code>s[i]</code> (i ≥ idx) into place, recurse, then <strong>swap back</strong>. The sequence of swaps on the root→leaf path creates the permutation.</p>
+            <div class="example" style="font-size:.8rem">i=0: abc
+├─ swap a: abc ─┬─ swap b: abc
+│               └─ swap c: acb
+├─ swap b: bac ─┬─ swap a: bac
+│               └─ swap c: bca
+└─ swap c: cba ─┬─ swap b: cba
+                └─ swap a: cab</div>
+            <ul class="mt-2"><li>One shared array, O(1) per change — true backtracking.</li><li>Must swap back, or later branches start from a scrambled string.</li><li>Output order is <em>not</em> lexicographic (cba before cab).</li></ul>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Where do duplicates come from?</h3>
+        <div class="split">
+          <div class="prose">
+            <p>For <code>"aab"</code>, placing the first <code>a</code> at position 0 and placing the second <code>a</code> at position 0 give <strong>identical subtrees</strong> — the swap tree prints <code>aab</code> twice, <code>aba</code> twice, <code>baa</code> twice.</p>
+            <p>Fix: keep a small set <code>used</code> <strong>local to each call</strong>. Before placing a letter at position <code>idx</code>, check whether that same letter has already been tried there. If yes, the whole subtree would be a duplicate — prune it.</p>
+            <div class="callout warn"><span class="ic">!</span><p>The set must be <strong>per level</strong> (declared inside the function). A single global set would forbid the letter <code>a</code> at <em>every</em> position after its first use and you would lose valid permutations.</p></div>
+          </div>
+          <div class="card card-flat">
+            <svg class="diagram" viewBox="0 0 340 220" role="img" aria-label="Swap tree for aab showing a duplicated subtree being pruned">
+              <g class="line"><path d="M170,30 L70,90"/><path d="M170,30 L170,90"/><path d="M170,30 L270,90"/><path d="M70,110 L40,170"/><path d="M70,110 L100,170"/><path d="M270,110 L240,170"/><path d="M270,110 L300,170"/></g>
+              <rect class="box" x="140" y="14" width="60" height="28" rx="14"/><text x="170" y="33" text-anchor="middle" style="font:600 13px var(--font-mono)">aab</text>
+              <rect class="box" x="40" y="80" width="60" height="28" rx="14"/><text x="70" y="99" text-anchor="middle" style="font:600 13px var(--font-mono)">aab</text>
+              <rect x="140" y="80" width="60" height="28" rx="14" style="fill:var(--bad-soft);stroke:var(--bad);stroke-dasharray:4 3"/><text x="170" y="99" text-anchor="middle" style="font:600 13px var(--font-mono);fill:var(--bad)">aab ✗</text>
+              <rect class="box" x="240" y="80" width="60" height="28" rx="14"/><text x="270" y="99" text-anchor="middle" style="font:600 13px var(--font-mono)">baa</text>
+              <text x="40" y="186" text-anchor="middle" style="font:600 12px var(--font-mono);fill:var(--good)">aab</text>
+              <text x="100" y="186" text-anchor="middle" style="font:600 12px var(--font-mono);fill:var(--good)">aba</text>
+              <text x="240" y="186" text-anchor="middle" style="font:600 12px var(--font-mono);fill:var(--good)">baa</text>
+              <text x="300" y="186" text-anchor="middle" style="font:600 12px var(--font-mono);fill:var(--text-faint)">baa ✗</text>
+              <text x="170" y="130" text-anchor="middle" class="faint" style="font-size:11px">second 'a' at pos 0</text>
+              <text x="170" y="145" text-anchor="middle" class="faint" style="font-size:11px">→ same subtree, pruned</text>
+              <text x="170" y="212" text-anchor="middle" class="dim" style="font-size:11px">with used = {a} at each level only 3 leaves survive</text>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="clrs" data-toc="CLRS pseudocode">
+        <h2>Algorithm (CLRS style)</h2>
+        <div class="grid grid-2">
+          <div>
+            <h4>Approach B — swap, with de-duplication</h4>
+<script type="text/plain" data-clrs>
+PERMUTE(s)
+    PERMUTE-FROM(s, 0)
+
+PERMUTE-FROM(s, idx)
+    if idx = s.length
+        print s
+        return
+    used ← ∅
+    for i ← idx to s.length − 1
+        if s[i] ∈ used
+            continue
+        used ← used ∪ {s[i]}
+        exchange s[idx] ↔ s[i]
+        PERMUTE-FROM(s, idx + 1)
+        exchange s[idx] ↔ s[i]
+</script>
+          </div>
+          <div>
+            <h4>Approach A — input / output (from the notes)</h4>
+<script type="text/plain" data-clrs>
+PERMUTE(ip, op)
+    if ip.length = 0
+        print op
+        return
+    used ← ∅
+    for i ← 0 to ip.length − 1
+        if ip[i] ∈ used
+            continue
+        used ← used ∪ {ip[i]}
+        newIp ← ip[0 .. i − 1] + ip[i + 1 .. ip.length − 1]
+        newOp ← op + ip[i]
+        PERMUTE(newIp, newOp)
+</script>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="code" data-toc="Code">
+        <h2>Code</h2>
+        <h4>Approach B — swap in place (pass by reference)</h4>
+        <div class="code-card mt-1">
+<script type="text/plain" data-lang="cpp">
+#include <bits/stdc++.h>
+using namespace std;
+
+void permute(string& s, int idx, vector<string>& ans) {
+    if (idx == (int)s.size()) {                   @@base
+        ans.push_back(s);                         @@base-
+        return;                                   @@base-
+    }
+    unordered_set<char> used;              // letters already placed at idx
+    for (int i = idx; i < (int)s.size(); i++) {   @@choices
+        if (used.count(s[i])) continue;           @@valid
+        used.insert(s[i]);
+        swap(s[idx], s[i]);                       @@change
+        permute(s, idx + 1, ans);                 @@recurse
+        swap(s[idx], s[i]);                       @@revert
+    }
+}
+
+int main() {
+    string s = "aab";
+    vector<string> ans;
+    permute(s, 0, ans);
+    for (const string& p : ans) cout << p << '\n';   // aab aba baa
+}
+</script>
+<script type="text/plain" data-lang="java">
+import java.util.*;
+
+public class Permutations {
+    static void permute(char[] s, int idx, List<String> ans) {
+        if (idx == s.length) {                    @@base
+            ans.add(new String(s));    // snapshot  @@base-
+            return;                               @@base-
+        }
+        Set<Character> used = new HashSet<>();
+        for (int i = idx; i < s.length; i++) {    @@choices
+            if (!used.add(s[i])) continue;        @@valid
+            swap(s, idx, i);                      @@change
+            permute(s, idx + 1, ans);             @@recurse
+            swap(s, idx, i);                      @@revert
+        }
+    }
+
+    static void swap(char[] s, int i, int j) { char t = s[i]; s[i] = s[j]; s[j] = t; }
+
+    public static void main(String[] args) {
+        List<String> ans = new ArrayList<>();
+        permute("aab".toCharArray(), 0, ans);
+        System.out.println(ans);   // [aab, aba, baa]
+    }
+}
+</script>
+<script type="text/plain" data-lang="python">
+def permute(s, idx, ans):
+    if idx == len(s):                             @@base
+        ans.append("".join(s))     # snapshot     @@base-
+        return                                    @@base-
+    used = set()
+    for i in range(idx, len(s)):                  @@choices
+        if s[i] in used:                          @@valid
+            continue                              @@valid-
+        used.add(s[i])
+        s[idx], s[i] = s[i], s[idx]               @@change
+        permute(s, idx + 1, ans)                  @@recurse
+        s[idx], s[i] = s[i], s[idx]               @@revert
+
+
+ans = []
+permute(list("aab"), 0, ans)
+print(ans)   # ['aab', 'aba', 'baa']
+</script>
+        </div>
+
+        <h4 class="mt-3">Approach A — input / output (pass by value)</h4>
+        <div class="code-card mt-1">
+<script type="text/plain" data-lang="cpp">
+void permute(string ip, string op, vector<string>& ans) {   // ip, op are copies
+    if (ip.empty()) { ans.push_back(op); return; }          // answer at the leaf
+    unordered_set<char> used;
+    for (int i = 0; i < (int)ip.size(); i++) {
+        if (used.count(ip[i])) continue;
+        used.insert(ip[i]);
+        string newIp = ip.substr(0, i) + ip.substr(i + 1);  // remove ip[i]
+        string newOp = op + ip[i];                           // append ip[i]
+        permute(newIp, newOp, ans);                          // nothing to undo
+    }
+}
+</script>
+<script type="text/plain" data-lang="java">
+static void permute(String ip, String op, List<String> ans) {
+    if (ip.isEmpty()) { ans.add(op); return; }               // answer at the leaf
+    Set<Character> used = new HashSet<>();
+    for (int i = 0; i < ip.length(); i++) {
+        if (!used.add(ip.charAt(i))) continue;
+        String newIp = ip.substring(0, i) + ip.substring(i + 1);
+        String newOp = op + ip.charAt(i);
+        permute(newIp, newOp, ans);                          // nothing to undo
+    }
+}
+</script>
+<script type="text/plain" data-lang="python">
+def permute(ip, op, ans):
+    if not ip:
+        ans.append(op)            # answer at the leaf
+        return
+    used = set()
+    for i, ch in enumerate(ip):
+        if ch in used:
+            continue
+        used.add(ch)
+        permute(ip[:i] + ip[i + 1:], op + ch, ans)   # new strings, nothing to undo
+</script>
+        </div>
+      </section>
+
+      <section class="section" id="dry-run" data-toc="Dry run">
+        <h2>Dry run — s = "abc", approach B</h2>
+        <div class="dry">
+          <div class="d"><span><code>idx=0, i=0</code>: swap(0,0) → <b>abc</b>. Recurse with idx = 1.</span></div>
+          <div class="d"><span><code>idx=1, i=1</code>: swap(1,1) → abc → idx = 2 → idx = 3 = n → print <b class="good">abc</b>. Swap back.</span></div>
+          <div class="d"><span><code>idx=1, i=2</code>: swap(1,2) → <b>acb</b> → print <b class="good">acb</b>. Swap back → abc.</span></div>
+          <div class="d"><span>Back at <code>idx=0</code>: swap(0,0) back (no-op). <code>i=1</code>: swap(0,1) → <b>bac</b>.</span></div>
+          <div class="d"><span>Subtree of <b>bac</b> prints <b class="good">bac</b>, <b class="good">bca</b>. Swap(0,1) back → abc.</span></div>
+          <div class="d"><span><code>i=2</code>: swap(0,2) → <b>cba</b>; subtree prints <b class="good">cba</b>, <b class="good">cab</b>. Swap back → abc. Done: 6 permutations, s is <code>"abc"</code> again.</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Complexity">
+        <h2>Complexity</h2>
+        <div class="grid grid-3">
+          <div class="kbox"><span class="k">Time</span><span class="v">O(n · n!)</span><span class="faint" style="font-size:.86rem">n! leaves, each needs O(n) to copy / print; internal nodes ≈ (e − 1)·n!</span></div>
+          <div class="kbox"><span class="k">Extra space (B)</span><span class="v">O(n)</span><span class="faint" style="font-size:.86rem">recursion depth n + one used-set per level (O(n²) worst case with sets)</span></div>
+          <div class="kbox"><span class="k">Extra space (A)</span><span class="v">O(n²)</span><span class="faint" style="font-size:.86rem">each of the n live frames holds strings of length ≤ n</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="pitfalls" data-toc="Pitfalls">
+        <h2>Common mistakes</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Forgetting the second swap.</strong> Later siblings then start from a scrambled string; you get repeated and missing permutations.</p></div>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Using one global “used” set for de-duplication.</strong> It must be declared inside the function so each position has its own.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Expecting sorted output from the swap method.</strong> For sorted output (LeetCode 47 / GFG) sort the input and use the <em>used[] + path</em> version, or sort the result.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Storing the shared object.</strong> In Java/Python always store a snapshot (<code>new String(s)</code>, <code>"".join(s)</code>), never the mutable array itself.</p></div>
+      </section>
+
+      <section class="section" id="exercises" data-toc="Exercises">
+        <h2>Exercises</h2>
+        <details class="ex"><summary><span class="qn">E1</span><span class="q">How many times is <code>permute</code> called for a string of 4 distinct letters (approach B)?</span></summary>
+          <div class="ans"><p>1 + 4 + 4·3 + 4·3·2 + 4·3·2·1 = 1 + 4 + 12 + 24 + 24 = <strong>65 calls</strong>, of which 24 are leaves.</p></div></details>
+        <details class="ex"><summary><span class="qn">E2</span><span class="q">Without de-duplication, how many strings does the swap method print for “aabb”? How many are distinct?</span></summary>
+          <div class="ans"><p>It prints 4! = <strong>24</strong> strings; only 4!/(2!·2!) = <strong>6</strong> are distinct.</p></div></details>
+        <details class="ex"><summary><span class="qn">E3</span><span class="q">Write the <em>used[] + path</em> version (choose any unused index, append, recurse, pop). Which slot changes?</span></summary>
+          <div class="ans"><p><strong>State:</strong> <code>path</code>, <code>used[]</code>. <strong>Choices:</strong> every index <code>i</code>. <strong>isValid:</strong> <code>!used[i]</code> (and for duplicates on a sorted array: skip if <code>i &gt; 0 &amp;&amp; s[i] == s[i−1] &amp;&amp; !used[i−1]</code>). <strong>Change:</strong> <code>used[i]=true; path.push(s[i])</code>. <strong>Revert:</strong> <code>path.pop(); used[i]=false</code>. Output is lexicographic if <code>s</code> is sorted.</p></div></details>
+        <details class="ex"><summary><span class="qn">E4</span><span class="q">Print only the permutations of “abcd” in which no two vowels are adjacent. Where does the check go?</span></summary>
+          <div class="ans"><p>In <strong>isValid</strong>: before placing <code>s[i]</code> at <code>idx</code>, reject it if it is a vowel and <code>s[idx−1]</code> is a vowel. Pruning early is far cheaper than filtering finished strings.</p></div></details>
+        <details class="ex"><summary><span class="qn">E5</span><span class="q">Given n and k, return the k-th permutation of 1..n (LeetCode 60) without generating all of them.</span></summary>
+          <div class="ans"><p>Each first digit owns a block of (n−1)! permutations. Pick block ⌊(k−1)/(n−1)!⌋, remove that digit, set k ← (k−1) mod (n−1)! + 1 and repeat — O(n²), no backtracking needed. Knowing the tree’s shape lets you skip whole subtrees.</p></div></details>
+        <details class="ex"><summary><span class="qn">E6</span><span class="q">Beautiful Arrangement (LeetCode 526): count permutations where <code>p[i] % i == 0</code> or <code>i % p[i] == 0</code>. Map it.</span></summary>
+          <div class="ans"><p>Fill position <code>pos = 1..n</code>. <strong>Choices:</strong> any unused number <code>x</code>. <strong>isValid:</strong> <code>x % pos == 0 || pos % x == 0</code>. <strong>Base:</strong> <code>pos &gt; n</code> → count++. Pruning inside the loop keeps it fast for n ≤ 15.</p></div></details>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/permutations-of-a-given-string2041/1" target="_blank" rel="noopener">Distinct Permutations of String</a></td><td><span class="chip medium">Medium</span></td><td>this page, sorted output</td></tr>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/dsa/write-a-c-program-to-print-all-permutations-of-a-given-string/" target="_blank" rel="noopener">Permutations of given String (article)</a></td><td><span class="chip">reading</span></td><td>both approaches</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/permutations/" target="_blank" rel="noopener">46. Permutations</a></td><td><span class="chip medium">Medium</span></td><td>distinct integers</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/permutations-ii/" target="_blank" rel="noopener">47. Permutations II</a></td><td><span class="chip medium">Medium</span></td><td>isValid skips duplicates</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/letter-case-permutation/" target="_blank" rel="noopener">784. Letter Case Permutation</a></td><td><span class="chip medium">Medium</span></td><td>2 choices per letter</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/beautiful-arrangement/" target="_blank" rel="noopener">526. Beautiful Arrangement</a></td><td><span class="chip medium">Medium</span></td><td>divisibility in isValid</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/next-permutation/" target="_blank" rel="noopener">31. Next Permutation</a></td><td><span class="chip medium">Medium</span></td><td>walk one step in the tree</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/permutation-sequence/" target="_blank" rel="noopener">60. Permutation Sequence</a></td><td><span class="chip hard">Hard</span></td><td>skip whole subtrees</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/number-of-squareful-arrays/" target="_blank" rel="noopener">996. Number of Squareful Arrays</a></td><td><span class="chip hard">Hard</span></td><td>adjacent-sum check + duplicates</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1622" target="_blank" rel="noopener">Creating Strings</a></td><td><span class="chip easy">Easy</span></td><td>distinct, sorted</td></tr>
+              <tr><td><span class="plat">Codeforces</span></td><td><a href="https://codeforces.com/problemset/problem/431/B" target="_blank" rel="noopener">431B · Shower Line</a></td><td><span class="chip easy">1200</span></td><td>try all 5! orders</td></tr>
+              <tr><td><span class="plat">Codeforces</span></td><td><a href="https://codeforces.com/problemset/problem/124/B" target="_blank" rel="noopener">124B · Permutations</a></td><td><span class="chip medium">1400</span></td><td>permute digit positions (k ≤ 8)</td></tr>
+              <tr><td><span class="plat">AtCoder</span></td><td><a href="https://atcoder.jp/contests/abc150/tasks/abc150_c" target="_blank" rel="noopener">ABC150 C · Count Order</a></td><td><span class="chip easy">Easy</span></td><td>rank of a permutation</td></tr>
+              <tr><td><span class="plat">AtCoder</span></td><td><a href="https://atcoder.jp/contests/abc145/tasks/abc145_c" target="_blank" rel="noopener">ABC145 C · Average Length</a></td><td><span class="chip easy">Easy</span></td><td>average over all orders</td></tr>
+              <tr><td><span class="plat">CodeChef</span></td><td><a href="https://www.codechef.com/practice-old/tags/permutations" target="_blank" rel="noopener">Permutations tag — practice list</a></td><td><span class="chip">mixed</span></td><td>filter by difficulty</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="index.html"><small>← Track</small>Backtracking overview</a>
+          <a class="next" href="k-swaps.html"><small>Next problem →</small>02 · Largest Number in K Swaps</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+  <script src="../assets/js/tracer.js"></script>
+  <script src="../assets/js/pages/permutations.js"></script>
+</body>
+</html>

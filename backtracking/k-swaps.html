@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Largest Number in K Swaps — Backtracking · RecursionVerse</title>
+  <meta name="description" content="Largest number in at most K swaps: why greedy fails on duplicate digits, the backtracking fix, animated state-space tree, CLRS pseudocode and C++/Java/Python code.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="backtracking"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Backtracking</a><span>/</span><span>Largest number in K swaps</span></div>
+      <div class="eyebrow">Problem 02 · digits · don't be greedy</div>
+      <h1>Largest Number in K Swaps</h1>
+      <div class="chips mt-1"><span class="chip medium">Medium</span><span class="chip accent">backtracking</span><span class="chip pink">greedy trap</span><span class="chip">O(n^k) worst case</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/largest-number-in-k-swaps-1587115620/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Largest number in K swaps</a>
+        <a class="plink" href="https://leetcode.com/problems/maximum-swap/" target="_blank" rel="noopener"><span class="dot dot-lc"></span>LeetCode 670 (k = 1)</a>
+        <a class="plink" href="https://codeforces.com/problemset/problem/915/C" target="_blank" rel="noopener"><span class="dot dot-cf"></span>CF 915C · Permute Digits</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <p class="problem-statement prose">Given a number as a string <code>s</code> and an integer <code>k</code>, perform <strong>at most k swaps</strong> of any two digits to make the number as <strong>large</strong> as possible. Return the largest number.</p>
+        <div class="grid grid-3 mt-2">
+          <div class="example"><span class="k">s = </span>"1234567", k = 4
+<span class="k">out  </span><span class="o">7654321</span>
+<span class="k">swap </span>1↔7, 2↔6, 3↔5</div>
+          <div class="example"><span class="k">s = </span>"3435335", k = 3
+<span class="k">out  </span><span class="o">5543333</span></div>
+          <div class="example"><span class="k">s = </span>"4577", k = 2
+<span class="k">out  </span><span class="o">7754</span>
+<span class="k">not  </span><span style="color:var(--bad)">7745</span> (greedy)</div>
+        </div>
+        <p class="muted mt-2"><strong>Constraints (GFG):</strong> 1 ≤ |s| ≤ 30, 1 ≤ k ≤ 10.</p>
+      </section>
+
+      <section class="section" id="greedy" data-toc="Why greedy fails">
+        <h2>Why not just be greedy?</h2>
+        <div class="prose">
+          <p>A natural idea: for each position from the left, swap in the largest digit to its right. For <code>1234567, k = 4</code> it works — after the first swap you already want the largest number, so each swap is forced.</p>
+          <p>Now take <code>4577, k = 2</code>. The largest digit, <code>7</code>, appears <strong>twice</strong>:</p>
+        </div>
+        <div class="grid grid-2 mt-2">
+          <div class="card card-flat">
+            <h4 class="bad">Approach 1 — first 7 (index 2)</h4>
+            <div class="greedy-demo"><div class="row"><span class="digits"><span class="sw">4</span><span>5</span><span class="sw">7</span><span>7</span></span><span class="faint mono">swap(0, 2)</span></div>
+            <div class="row"><span class="digits"><span>7</span><span class="sw">5</span><span>4</span><span class="sw">7</span></span><span class="faint mono">swap(1, 3)</span></div>
+            <div class="row"><span class="digits"><span class="lose">7</span><span class="lose">7</span><span class="lose">4</span><span class="lose">5</span></span><span class="bad mono">7745</span></div></div>
+          </div>
+          <div class="card card-flat">
+            <h4 class="good">Approach 2 — last 7 (index 3)</h4>
+            <div class="greedy-demo"><div class="row"><span class="digits"><span class="sw">4</span><span>5</span><span>7</span><span class="sw">7</span></span><span class="faint mono">swap(0, 3)</span></div>
+            <div class="row"><span class="digits"><span>7</span><span class="sw">5</span><span class="sw">7</span><span>4</span></span><span class="faint mono">swap(1, 2)</span></div>
+            <div class="row"><span class="digits"><span class="win">7</span><span class="win">7</span><span class="win">5</span><span class="win">4</span></span><span class="good mono">7754 ✓</span></div></div>
+          </div>
+        </div>
+        <div class="callout info mt-2"><span class="ic">i</span><p>Greedy is fine when the maximum digit is <strong>unique</strong>. With duplicates, <em>which</em> copy you move decides which smaller digit gets pushed where — and you cannot know that in advance. So you <strong>try every copy</strong> (hit and trial) and undo the ones that lose: backtracking.</p></div>
+
+        <div class="card mt-3" id="greedy-demo">
+          <div class="flex wrap gap-2 items-center" style="justify-content:space-between">
+            <h3 class="mb-0">Try it: greedy vs backtracking</h3>
+            <div class="flex wrap gap-2">
+              <label class="field">number <input type="text" name="num" value="4577" inputmode="numeric" aria-label="Number"></label>
+              <label class="field">k <input type="number" name="k" value="2" min="1" max="6" aria-label="k"></label>
+            </div>
+          </div>
+          <div class="flex wrap gap-2 mt-2">
+            <button class="btn btn-sm" type="button" data-g="4577,2">4577, 2</button>
+            <button class="btn btn-sm" type="button" data-g="3435335,3">3435335, 3</button>
+            <button class="btn btn-sm" type="button" data-g="1234567,4">1234567, 4</button>
+            <button class="btn btn-sm" type="button" data-g="129814999,4">129814999, 4</button>
+          </div>
+          <div class="greedy-demo greedy-out mt-2"></div>
+        </div>
+      </section>
+
+      <section class="section" id="pattern" data-toc="Map to the template">
+        <h2>Map it onto the template</h2>
+        <div class="map-grid mt-2">
+          <div class="map-row" style="--c:var(--s-change)"><span class="k">Shared state</span><span class="v">the digit string <code>s</code> and the answer <code>best</code>, both by reference; <code>k</code> and <code>idx</code> by value.</span></div>
+          <div class="map-row" style="--c:var(--s-base)"><span class="k">Base case</span><span class="v"><code>k == 0</code> or <code>idx == n</code>. Note: <em>every</em> node is a candidate answer — update <code>best</code> right after each swap, not only at leaves.</span></div>
+          <div class="map-row" style="--c:var(--s-choice)"><span class="k">Choices</span><span class="v">every position <code>j &gt; idx</code> whose digit could come to <code>idx</code>.</span></div>
+          <div class="map-row" style="--c:var(--s-valid)"><span class="k">isValid</span><span class="v"><code>s[j] == max(s[idx..n−1])</code> and that max is bigger than <code>s[idx]</code>. If <code>s[idx]</code> is already the max, skip this position without spending a swap.</span></div>
+          <div class="map-row" style="--c:var(--s-change)"><span class="k">Change</span><span class="v"><code>swap(s[idx], s[j])</code>, then <code>best = max(best, s)</code>.</span></div>
+          <div class="map-row" style="--c:var(--s-recurse)"><span class="k">Recurse</span><span class="v"><code>solve(s, k − 1, idx + 1)</code></span></div>
+          <div class="map-row" style="--c:var(--s-revert)"><span class="k">Revert</span><span class="v"><code>swap(s[idx], s[j])</code> back.</span></div>
+        </div>
+        <p class="muted mt-2">The <strong>brute</strong> version maps even more directly: choices = every pair <code>(i, j)</code>, isValid = <code>s[j] &gt; s[i]</code>. It is correct but explores far more nodes — switch to it in the visualizer to compare.</p>
+      </section>
+
+      <section class="section" id="visualize" data-toc="Visualize it">
+        <h2>Visualize it</h2>
+        <p class="muted">Two branches leave the root of <code>4577</code> — one per copy of <code>7</code>. The left one ends at <b class="good">7754</b>, the right one at <b class="bad">7745</b>. Presets:
+          <button class="btn btn-sm" type="button" data-kpreset="4577,2,opt">4577 · k=2</button>
+          <button class="btn btn-sm" type="button" data-kpreset="3435335,3,opt">3435335 · k=3</button>
+          <button class="btn btn-sm" type="button" data-kpreset="4577,2,brute">4577 · brute</button>
+          <button class="btn btn-sm" type="button" data-kpreset="1234,2,brute">1234 · brute</button>
+        </p>
+        <div id="viz-kswap" class="mt-2"></div>
+      </section>
+
+      <section class="section" id="clrs" data-toc="CLRS pseudocode">
+        <h2>Algorithm (CLRS style)</h2>
+<script type="text/plain" data-clrs>
+LARGEST-AFTER-K-SWAPS(s, k)
+    best ← s
+    MAX-K-SWAPS(s, k, 0, best)
+    return best
+
+MAX-K-SWAPS(s, k, idx, best)
+    if k = 0 or idx = s.length
+        return
+    mx ← MAX(s[idx .. s.length − 1])
+    if mx = s[idx]
+        MAX-K-SWAPS(s, k, idx + 1, best)
+        return
+    for j ← s.length − 1 downto idx + 1
+        if s[j] = mx
+            exchange s[idx] ↔ s[j]
+            if s > best
+                best ← s
+            MAX-K-SWAPS(s, k − 1, idx + 1, best)
+            exchange s[idx] ↔ s[j]
+</script>
+      </section>
+
+      <section class="section" id="code" data-toc="Code">
+        <h2>Code</h2>
+        <div class="code-card">
+<script type="text/plain" data-lang="cpp">
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve(string& s, int k, int idx, string& best) {
+    if (k == 0 || idx == (int)s.size()) return;              @@base
+    char mx = *max_element(s.begin() + idx, s.end());
+    if (mx == s[idx]) {                     // already the best digit here
+        solve(s, k, idx + 1, best);         // move on, keep k
+        return;
+    }
+    for (int j = (int)s.size() - 1; j > idx; j--) {          @@choices
+        if (s[j] != mx) continue;           // try every copy of mx   @@valid
+        swap(s[idx], s[j]);                                  @@change
+        best = max(best, s);                                 @@change-
+        solve(s, k - 1, idx + 1, best);                      @@recurse
+        swap(s[idx], s[j]);                                  @@revert
+    }
+}
+
+string findMaximumNum(string s, int k) {
+    string best = s;
+    solve(s, k, 0, best);
+    return best;
+}
+
+int main() {
+    cout << findMaximumNum("4577", 2) << '\n';      // 7754
+    cout << findMaximumNum("3435335", 3) << '\n';   // 5543333
+}
+</script>
+<script type="text/plain" data-lang="java">
+public class KSwaps {
+    static String best;
+
+    static void solve(char[] s, int k, int idx) {
+        if (k == 0 || idx == s.length) return;               @@base
+        char mx = s[idx];
+        for (int j = idx + 1; j < s.length; j++) if (s[j] > mx) mx = s[j];
+        if (mx == s[idx]) { solve(s, k, idx + 1); return; }
+        for (int j = s.length - 1; j > idx; j--) {           @@choices
+            if (s[j] != mx) continue;                        @@valid
+            swap(s, idx, j);                                 @@change
+            String cur = new String(s);                      @@change-
+            if (cur.compareTo(best) > 0) best = cur;         @@change-
+            solve(s, k - 1, idx + 1);                        @@recurse
+            swap(s, idx, j);                                 @@revert
+        }
+    }
+
+    static void swap(char[] s, int i, int j) { char t = s[i]; s[i] = s[j]; s[j] = t; }
+
+    static String findMaximumNum(String str, int k) {
+        best = str;
+        solve(str.toCharArray(), k, 0);
+        return best;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(findMaximumNum("4577", 2));      // 7754
+        System.out.println(findMaximumNum("3435335", 3));   // 5543333
+    }
+}
+</script>
+<script type="text/plain" data-lang="python">
+def find_maximum_num(s, k):
+    s = list(s)
+    best = ["".join(s)]                       # a list so the helper can update it
+
+    def solve(k, idx):
+        if k == 0 or idx == len(s):                          @@base
+            return                                           @@base-
+        mx = max(s[idx:])
+        if mx == s[idx]:
+            solve(k, idx + 1)
+            return
+        for j in range(len(s) - 1, idx, -1):                 @@choices
+            if s[j] != mx:                                   @@valid
+                continue                                     @@valid-
+            s[idx], s[j] = s[j], s[idx]                      @@change
+            best[0] = max(best[0], "".join(s))               @@change-
+            solve(k - 1, idx + 1)                            @@recurse
+            s[idx], s[j] = s[j], s[idx]                      @@revert
+
+    solve(k, 0)
+    return best[0]
+
+
+print(find_maximum_num("4577", 2))       # 7754
+print(find_maximum_num("3435335", 3))    # 5543333
+</script>
+        </div>
+        <details class="ex mt-2"><summary><span class="qn">B</span><span class="q">Show the brute (pure template) version</span></summary>
+          <div class="ans" style="padding-left:18px">
+            <div class="code-card">
+<script type="text/plain" data-lang="cpp">
+// choices = every pair (i, j); isValid = s[j] > s[i]
+void tryAll(string& s, int k, string& best) {
+    best = max(best, s);
+    if (k == 0) return;
+    for (int i = 0; i + 1 < (int)s.size(); i++)
+        for (int j = i + 1; j < (int)s.size(); j++)
+            if (s[j] > s[i]) {
+                swap(s[i], s[j]);
+                tryAll(s, k - 1, best);
+                swap(s[i], s[j]);
+            }
+}
+</script>
+<script type="text/plain" data-lang="java">
+static void tryAll(char[] s, int k) {
+    String cur = new String(s);
+    if (cur.compareTo(best) > 0) best = cur;
+    if (k == 0) return;
+    for (int i = 0; i + 1 < s.length; i++)
+        for (int j = i + 1; j < s.length; j++)
+            if (s[j] > s[i]) {
+                swap(s, i, j);
+                tryAll(s, k - 1);
+                swap(s, i, j);
+            }
+}
+</script>
+<script type="text/plain" data-lang="python">
+def try_all(s, k, best):
+    best[0] = max(best[0], "".join(s))
+    if k == 0:
+        return
+    for i in range(len(s) - 1):
+        for j in range(i + 1, len(s)):
+            if s[j] > s[i]:
+                s[i], s[j] = s[j], s[i]
+                try_all(s, k - 1, best)
+                s[i], s[j] = s[j], s[i]
+</script>
+            </div>
+          </div></details>
+      </section>
+
+      <section class="section" id="dry-run" data-toc="Dry run">
+        <h2>Dry run — s = "4577", k = 2</h2>
+        <div class="dry">
+          <div class="d"><span><code>idx = 0</code>: max of "4577" is 7, found at j = 3 and j = 2. s[0] = 4 ≠ 7, so we will spend a swap.</span></div>
+          <div class="d"><span><code>j = 3</code>: swap(0, 3) → <b>7574</b>, best = 7574. Recurse with k = 1, idx = 1.</span></div>
+          <div class="d"><span><code>idx = 1</code>: max of "574" is 7 at j = 2 → swap(1, 2) → <b class="good">7754</b>, best = 7754. Recurse k = 0 → return. Swap back → 7574.</span></div>
+          <div class="d"><span>Back at idx = 0: swap(0, 3) back → 4577. <code>j = 2</code>: swap(0, 2) → <b>7547</b> (not better than 7754).</span></div>
+          <div class="d"><span><code>idx = 1</code>: max of "547" is 7 at j = 3 → swap(1, 3) → <b class="bad">7745</b> &lt; 7754. Swap back, swap back.</span></div>
+          <div class="d"><span>Answer: <b class="good">7754</b>.</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Complexity">
+        <h2>Complexity</h2>
+        <div class="grid grid-3">
+          <div class="kbox"><span class="k">Brute time</span><span class="v">O((n²)^k · n)</span><span class="faint" style="font-size:.86rem">n² pairs at each of k levels, O(n) to compare strings</span></div>
+          <div class="kbox"><span class="k">Optimised time</span><span class="v">O(n^k · n)</span><span class="faint" style="font-size:.86rem">worst case only when the max digit repeats a lot; usually close to O(n·k)</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(n)</span><span class="faint" style="font-size:.86rem">depth ≤ n (idx grows each call), s and best shared</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="pitfalls" data-toc="Pitfalls">
+        <h2>Common mistakes</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Updating best only at the leaves.</strong> Using fewer than k swaps can be optimal (“at most k”). Compare after every swap.</p></div>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Spending a swap when <code>s[idx]</code> is already the maximum.</strong> Move to <code>idx + 1</code> with the same <code>k</code>.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Trying only one copy of the max digit.</strong> That is the greedy bug — try all of them.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Passing <code>s</code> by value in C++.</strong> Correct, but copies the string on every call. Pass by reference and swap back.</p></div>
+      </section>
+
+      <section class="section" id="exercises" data-toc="Exercises">
+        <h2>Exercises</h2>
+        <details class="ex"><summary><span class="qn">E1</span><span class="q">Find the answer for <code>s = "129814999", k = 4</code> by hand. Where does greedy go wrong?</span></summary>
+          <div class="ans"><p>Answer: <strong>999984211</strong>. The digit 9 appears four times; which 9 you move first decides where the displaced 1, 2 and 8 end up, so all copies must be tried.</p></div></details>
+        <details class="ex"><summary><span class="qn">E2</span><span class="q">Prove that greedy is optimal when all digits are distinct.</span></summary>
+          <div class="ans"><p>At the leftmost position that is not yet maximal, any optimal answer must place the unique maximum of the suffix there (otherwise it is smaller at that position, and higher positions dominate). With a unique maximum there is exactly one swap that achieves it, so the choice is forced — no alternatives to explore.</p></div></details>
+        <details class="ex"><summary><span class="qn">E3</span><span class="q">Modify the algorithm to find the <em>smallest</em> number with at most k swaps, with no leading zero.</span></summary>
+          <div class="ans"><p>Use <code>min</code> instead of <code>max</code>, and at <code>idx = 0</code> restrict the candidate minimum to non-zero digits. Update <code>best</code> with <code>min</code>.</p></div></details>
+        <details class="ex"><summary><span class="qn">E4</span><span class="q">k = 1 only (LeetCode 670). Can you do it in O(n) without recursion?</span></summary>
+          <div class="ans"><p>Record the last index of each digit. Scan left to right; for position i, look for the largest digit d &gt; s[i] (from 9 down) whose last index is &gt; i. Swap with that <em>last</em> occurrence and stop.</p></div></details>
+        <details class="ex"><summary><span class="qn">E5</span><span class="q">Why does the optimised version iterate <code>j</code> over positions with <code>s[j] == mx</code> only, and is it still complete?</span></summary>
+          <div class="ans"><p>Any optimal solution puts the suffix maximum at the first non-maximal position; swapping in anything smaller can only produce a smaller number. So restricting to copies of <code>mx</code> prunes only branches that cannot win — the search stays complete.</p></div></details>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/largest-number-in-k-swaps-1587115620/1" target="_blank" rel="noopener">Largest number in K swaps</a></td><td><span class="chip medium">Medium</span></td><td>this page</td></tr>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/dsa/find-maximum-number-possible-by-doing-at-most-k-swaps/" target="_blank" rel="noopener">Maximum number with at most K swaps (article)</a></td><td><span class="chip">reading</span></td><td>same idea</td></tr>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/largest-number-in-one-swap1520/1" target="_blank" rel="noopener">Largest number in one swap</a></td><td><span class="chip easy">Easy</span></td><td>k = 1, greedy works</td></tr>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/dsa/largest-permutation-k-swaps/" target="_blank" rel="noopener">Largest permutation after at most k swaps</a></td><td><span class="chip medium">Medium</span></td><td>distinct values → greedy</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/maximum-swap/" target="_blank" rel="noopener">670. Maximum Swap</a></td><td><span class="chip medium">Medium</span></td><td>k = 1</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/largest-number-after-digit-swaps-by-parity/" target="_blank" rel="noopener">2231. Largest Number After Digit Swaps by Parity</a></td><td><span class="chip easy">Easy</span></td><td>swaps restricted by parity</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/minimum-possible-integer-after-at-most-k-adjacent-swaps-on-digits/" target="_blank" rel="noopener">1505. Min Integer After ≤ K Adjacent Swaps</a></td><td><span class="chip hard">Hard</span></td><td>adjacent swaps → greedy + BIT</td></tr>
+              <tr><td><span class="plat">Codeforces</span></td><td><a href="https://codeforces.com/problemset/problem/435/B" target="_blank" rel="noopener">435B · Pasha Maximizes</a></td><td><span class="chip easy">1400</span></td><td>adjacent swaps, greedy</td></tr>
+              <tr><td><span class="plat">Codeforces</span></td><td><a href="https://codeforces.com/problemset/problem/915/C" target="_blank" rel="noopener">915C · Permute Digits</a></td><td><span class="chip medium">1700</span></td><td>largest permutation ≤ b, backtrack on digits</td></tr>
+              <tr><td><span class="plat">CodeChef</span></td><td><a href="https://www.codechef.com/practice-old/tags/backtracking" target="_blank" rel="noopener">Backtracking tag — practice list</a></td><td><span class="chip">mixed</span></td><td>filter by difficulty</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="permutations.html"><small>← Previous</small>01 · All Permutations</a>
+          <a class="next" href="hamiltonian-cycle.html"><small>Next problem →</small>03 · Hamiltonian Cycle</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+  <script src="../assets/js/tracer.js"></script>
+  <script src="../assets/js/pages/kswaps.js"></script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Graph Colouring (m-colouring) — Backtracking · RecursionVerse</title>
+  <meta name="description" content="m-colouring with backtracking: the choice is the colour, isSafe() as the validity check, animated state-space tree and graph, CLRS pseudocode, C++/Java/Python code, exercises and practice links.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="backtracking"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Backtracking</a><span>/</span><span>Graph colouring</span></div>
+      <div class="eyebrow">Problem 04 · graphs · isSafe()</div>
+      <h1>Graph Colouring (m-colouring)</h1>
+      <div class="chips mt-1"><span class="chip medium">Medium</span><span class="chip accent">backtracking</span><span class="chip cyan">graphs</span><span class="chip">O(m^V · V)</span><span class="chip">NP-complete for m ≥ 3</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/m-coloring-problem-1587115620/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · M-Coloring Problem</a>
+        <a class="plink" href="https://leetcode.com/problems/flower-planting-with-no-adjacent/" target="_blank" rel="noopener"><span class="dot dot-lc"></span>LeetCode 1042</a>
+        <a class="plink" href="https://leetcode.com/problems/is-graph-bipartite/" target="_blank" rel="noopener"><span class="dot dot-lc"></span>LeetCode 785 (m = 2)</a>
+        <a class="plink" href="https://atcoder.jp/contests/abc199/tasks/abc199_d" target="_blank" rel="noopener"><span class="dot dot-at"></span>AtCoder ABC199 D</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <div class="split">
+          <div class="prose problem-statement">
+            <p>Given an undirected graph <code>G = (V, E)</code> and <code>m</code> colours, assign a colour to <strong>every vertex</strong> such that <strong>no two adjacent vertices have the same colour</strong>.</p>
+            <p>Decision version: determine whether <code>G</code> can be coloured using <strong>at most m</strong> colours.</p>
+            <p class="muted">Representation: adjacency matrix <code>A</code> and <code>vector&lt;int&gt; color(n, 0)</code>, where <code>color[i]</code> is the colour of vertex <code>i</code> and <strong>0 means “not coloured yet”</strong>.</p>
+          </div>
+          <div class="grid grid-2">
+            <div class="card card-flat"><div data-gcmini="1,2,3,1"></div><p class="muted mb-0 center"><strong class="good">valid</strong> · m = 3 · [1, 2, 3, 1]</p></div>
+            <div class="card card-flat"><div data-gcmini="1,1,0,0" data-bad="0,1"></div><p class="muted mb-0 center"><strong class="bad">invalid</strong> · edge 0–1 has equal colours</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="choice" data-toc="What is the choice?">
+        <h2>What is the choice this time?</h2>
+        <div class="compare">
+          <div class="card vs-card"><h4><span class="chip">Hamiltonian cycle</span></h4><p class="muted mb-0">Choice = <strong>which vertex</strong> should I visit next? The loop runs over vertices.</p></div>
+          <div class="card vs-card"><h4><span class="chip accent">Graph colouring</span></h4><p class="muted mb-0">Choice = <strong>which colour</strong> should I give the current vertex? The vertices are processed in a fixed order 0, 1, …, n−1; the loop runs over colours:</p>
+            <pre class="code" style="padding:10px 0;margin-top:8px;background:var(--code-bg);border-radius:10px"><span class="ln"><span class="tok-kw">for</span> (<span class="tok-type">int</span> c = <span class="tok-num">1</span>; c &lt;= m; c++)   <span class="tok-com">// choice loop</span></span></pre></div>
+        </div>
+        <h3 class="mt-4">What makes a colour a valid choice?</h3>
+        <div class="prose">
+          <p>Suppose we want <code>color[2] = 1</code>. We must check: <em>is any neighbour of vertex 2 already coloured 1?</em> For every vertex <code>j</code>: if <code>A[2][j] == 1 &amp;&amp; color[j] == 1</code> then colour 1 is invalid.</p>
+          <p>That check is <code>isSafe(v, c)</code> — “can I assign colour <code>c</code> to vertex <code>v</code> without violating the colour constraint?” It is the <span class="slot slot-valid">isValid</span> slot of the template. Uncoloured neighbours (<code>color[j] = 0</code>) never conflict.</p>
+        </div>
+      </section>
+
+      <section class="section" id="pattern" data-toc="Map to the template">
+        <h2>Map it onto the template</h2>
+        <div class="map-grid">
+          <div class="map-row" style="--c:var(--s-change)"><span class="k">Shared state</span><span class="v"><code>color[0..n−1]</code> (by reference); <code>v</code> = the vertex being coloured.</span></div>
+          <div class="map-row" style="--c:var(--s-base)"><span class="k">Base case</span><span class="v"><code>v == n</code> → every vertex has a safe colour → return TRUE.</span></div>
+          <div class="map-row" style="--c:var(--s-choice)"><span class="k">Choices</span><span class="v">colours <code>c = 1 … m</code>.</span></div>
+          <div class="map-row" style="--c:var(--s-valid)"><span class="k">isValid</span><span class="v"><code>isSafe(v, c)</code>: no <code>u</code> with <code>A[v][u] == 1 &amp;&amp; color[u] == c</code>.</span></div>
+          <div class="map-row" style="--c:var(--s-change)"><span class="k">Change</span><span class="v"><code>color[v] = c</code></span></div>
+          <div class="map-row" style="--c:var(--s-recurse)"><span class="k">Recurse</span><span class="v"><code>if (solve(v + 1)) return true;</code></span></div>
+          <div class="map-row" style="--c:var(--s-revert)"><span class="k">Revert</span><span class="v"><code>color[v] = 0</code></span></div>
+        </div>
+      </section>
+
+      <section class="section" id="visualize" data-toc="Visualize it">
+        <h2>Visualize it</h2>
+        <p class="muted">Each tree node is one assignment <code>v<em>i</em>=c</code>, drawn in that colour. Crossed nodes are colours that IS-SAFE rejected — the red edge in the graph shows which neighbour caused it. Try <em>K4 with m = 3</em> to watch the search exhaust every branch.</p>
+        <div id="viz-gc" class="mt-2"></div>
+      </section>
+
+      <section class="section" id="dry-run" data-toc="Dry run">
+        <h2>Dry run (from the notes) — m = 3</h2>
+        <div class="dry">
+          <div class="d"><span>Start: <code>color = [0, 0, 0, 0]</code>.</span></div>
+          <div class="d"><span><b>Vertex 0</b>: neighbours 1 and 2 are uncoloured → colour 1 is safe → <code>[1, 0, 0, 0]</code>.</span></div>
+          <div class="d"><span><b>Vertex 1</b>: neighbours 0, 2, 3. Colour 1 is <b class="bad">not valid</b> (vertex 0 has it). Colour 2 is valid → <code>[1, 2, 0, 0]</code>.</span></div>
+          <div class="d"><span><b>Vertex 2</b>: neighbours 0 (1), 1 (2), 3 (0). Colours 1 and 2 clash → colour 3 → <code>[1, 2, 3, 0]</code>.</span></div>
+          <div class="d"><span><b>Vertex 3</b>: neighbours 1 (2), 2 (3). Colour 1 — no neighbour has it → <code>[1, 2, 3, 1]</code>.</span></div>
+          <div class="d"><span><code>v == n</code> → a valid colouring is found: <b class="good">[1, 2, 3, 1]</b>.</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="clrs" data-toc="CLRS pseudocode">
+        <h2>Algorithm (CLRS style)</h2>
+<script type="text/plain" data-clrs>
+GRAPH-COLORING(A, n, m)
+    for v ← 0 to n − 1
+        color[v] ← 0
+    if COLOR-UTIL(A, color, 0, n, m)
+        return TRUE
+    return FALSE
+
+COLOR-UTIL(A, color, v, n, m)
+    if v = n
+        return TRUE
+    for c ← 1 to m
+        if IS-SAFE(A, color, v, c, n)
+            color[v] ← c
+            if COLOR-UTIL(A, color, v + 1, n, m)
+                return TRUE
+            color[v] ← 0
+    return FALSE
+
+IS-SAFE(A, color, v, c, n)
+    for u ← 0 to n − 1
+        if A[v][u] = 1 and color[u] = c
+            return FALSE
+    return TRUE
+</script>
+        <p class="faint mt-1" style="font-size:.86rem">In the handwritten notes these are GRAPH-COLOURING, COLORY and SAFE — same algorithm, different names.</p>
+      </section>
+
+      <section class="section" id="code" data-toc="Code">
+        <h2>Code</h2>
+        <div class="code-card">
+<script type="text/plain" data-lang="cpp">
+#include <bits/stdc++.h>
+using namespace std;
+
+bool isSafe(const vector<vector<int>>& A, const vector<int>& color, int v, int c) {
+    for (int u = 0; u < (int)A.size(); u++)
+        if (A[v][u] && color[u] == c) return false;   // neighbour already has c
+    return true;
+}
+
+bool colorUtil(const vector<vector<int>>& A, vector<int>& color, int v, int m) {
+    if (v == (int)A.size()) return true;              @@base
+    for (int c = 1; c <= m; c++) {                    @@choices
+        if (!isSafe(A, color, v, c)) continue;        @@valid
+        color[v] = c;                                 @@change
+        if (colorUtil(A, color, v + 1, m))            @@recurse
+            return true;                              @@recurse-
+        color[v] = 0;                                 @@revert
+    }
+    return false;
+}
+
+int main() {
+    vector<vector<int>> A = {{0,1,1,0},
+                             {1,0,1,1},
+                             {1,1,0,1},
+                             {0,1,1,0}};
+    int m = 3;
+    vector<int> color(A.size(), 0);
+    if (colorUtil(A, color, 0, m)) {
+        for (int c : color) cout << c << ' ';           // 1 2 3 1
+        cout << '\n';
+    } else {
+        cout << "Not possible with " << m << " colours\n";
+    }
+}
+</script>
+<script type="text/plain" data-lang="java">
+import java.util.*;
+
+public class GraphColoring {
+    static boolean isSafe(int[][] A, int[] color, int v, int c) {
+        for (int u = 0; u < A.length; u++)
+            if (A[v][u] == 1 && color[u] == c) return false;
+        return true;
+    }
+
+    static boolean colorUtil(int[][] A, int[] color, int v, int m) {
+        if (v == A.length) return true;               @@base
+        for (int c = 1; c <= m; c++) {                @@choices
+            if (!isSafe(A, color, v, c)) continue;    @@valid
+            color[v] = c;                             @@change
+            if (colorUtil(A, color, v + 1, m))        @@recurse
+                return true;                          @@recurse-
+            color[v] = 0;                             @@revert
+        }
+        return false;
+    }
+
+    public static void main(String[] args) {
+        int[][] A = {{0,1,1,0}, {1,0,1,1}, {1,1,0,1}, {0,1,1,0}};
+        int[] color = new int[A.length];
+        System.out.println(colorUtil(A, color, 0, 3)
+                ? Arrays.toString(color)                // [1, 2, 3, 1]
+                : "Not possible");
+    }
+}
+</script>
+<script type="text/plain" data-lang="python">
+def is_safe(A, color, v, c):
+    return all(not (A[v][u] and color[u] == c) for u in range(len(A)))
+
+
+def color_util(A, color, v, m):
+    if v == len(A):                                   @@base
+        return True                                   @@base-
+    for c in range(1, m + 1):                         @@choices
+        if not is_safe(A, color, v, c):               @@valid
+            continue                                  @@valid-
+        color[v] = c                                  @@change
+        if color_util(A, color, v + 1, m):            @@recurse
+            return True                               @@recurse-
+        color[v] = 0                                  @@revert
+    return False
+
+
+A = [[0, 1, 1, 0],
+     [1, 0, 1, 1],
+     [1, 1, 0, 1],
+     [0, 1, 1, 0]]
+color = [0] * len(A)
+print(color if color_util(A, color, 0, 3) else "Not possible")   # [1, 2, 3, 1]
+</script>
+        </div>
+        <div class="callout tip mt-2"><span class="ic">✓</span><p><strong>Edge-list input (GFG):</strong> build an adjacency list and make <code>isSafe</code> scan only <code>adj[v]</code> — O(deg v) instead of O(n).</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Complexity">
+        <h2>Complexity</h2>
+        <div class="grid grid-3">
+          <div class="kbox"><span class="k">Time</span><span class="v">O(m^V · V)</span><span class="faint" style="font-size:.86rem">m choices for each of V vertices, O(V) isSafe per try (O(deg) with lists)</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(V)</span><span class="faint" style="font-size:.86rem">the color[] array and recursion depth V</span></div>
+          <div class="kbox"><span class="k">Special case m = 2</span><span class="v">O(V + E)</span><span class="faint" style="font-size:.86rem">2-colourable ⇔ bipartite — a BFS/DFS check, no backtracking needed</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="pitfalls" data-toc="Pitfalls">
+        <h2>Common mistakes</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Not resetting <code>color[v] = 0</code>.</strong> A stale colour on an uncoloured-in-theory vertex makes later isSafe checks reject valid colours.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Colours starting at 0.</strong> If 0 means “uncoloured”, real colours must be 1..m — otherwise isSafe treats every uncoloured neighbour as a conflict.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Disconnected graphs</strong> need no special handling here — vertices are coloured in index order, not by traversal.</p></div>
+      </section>
+
+      <section class="section" id="exercises" data-toc="Exercises">
+        <h2>Exercises</h2>
+        <details class="ex"><summary><span class="qn">E1</span><span class="q">What is the chromatic number (minimum m) of the notes graph? Of K4? Of the Petersen graph?</span></summary>
+          <div class="ans"><p>Notes graph: <strong>3</strong> (vertices 0, 1, 2 form a triangle). K4: <strong>4</strong>. Petersen: <strong>3</strong> (it has 5-cycles, so 2 is impossible). Find it by running m = 1, 2, 3, … until COLOR-UTIL succeeds.</p></div></details>
+        <details class="ex"><summary><span class="qn">E2</span><span class="q">How many valid 3-colourings does the notes graph have? Check with “All colourings”.</span></summary>
+          <div class="ans"><p>The triangle 0–1–2 can take the 3 colours in 3! = 6 ways; vertex 3 is adjacent to 1 and 2 so it must copy vertex 0’s colour. Total <strong>6</strong>.</p></div></details>
+        <details class="ex"><summary><span class="qn">E3</span><span class="q">Sudoku as graph colouring: what are the vertices, edges and colours?</span></summary>
+          <div class="ans"><p>81 vertices (cells); an edge between two cells in the same row, column or 3×3 box; m = 9 colours (digits). Pre-filled cells are pre-coloured. The Sudoku solver is exactly this page’s algorithm with a different isSafe.</p></div></details>
+        <details class="ex"><summary><span class="qn">E4</span><span class="q">Symmetry: with m colours every solution appears m! times with colours renamed. How can you prune that?</span></summary>
+          <div class="ans"><p>Allow vertex <code>v</code> to use at most one <em>new</em> colour: <code>c ≤ 1 + max(color[0..v−1])</code>. Vertex 0 then only tries colour 1 — this alone cuts the search by up to m!.</p></div></details>
+        <details class="ex"><summary><span class="qn">E5</span><span class="q">Why might colouring the highest-degree vertices first reduce backtracking?</span></summary>
+          <div class="ans"><p>Highly constrained vertices fail fastest. Colouring them early detects dead ends near the root, where a pruned branch removes the largest subtree (“fail-first” heuristic, as in Welsh–Powell / DSatur).</p></div></details>
+        <details class="ex"><summary><span class="qn">E6</span><span class="q">Count the colourings of a graph with 3 colours for n ≤ 20 (AtCoder ABC199 D). Is plain backtracking fast enough?</span></summary>
+          <div class="ans"><p>3²⁰ ≈ 3.5·10⁹ is too many in the worst case. Colour vertices in DFS order within each connected component so every vertex after the first has an already-coloured neighbour (≤ 2 choices), and multiply the component counts: roughly 3·2¹⁹ per component — fast enough.</p></div></details>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/m-coloring-problem-1587115620/1" target="_blank" rel="noopener">M-Coloring Problem</a></td><td><span class="chip medium">Medium</span></td><td>this page (edge-list input)</td></tr>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/dsa/m-coloring-problem/" target="_blank" rel="noopener">M-Coloring Problem (article)</a></td><td><span class="chip">reading</span></td><td>same algorithm</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/is-graph-bipartite/" target="_blank" rel="noopener">785. Is Graph Bipartite?</a></td><td><span class="chip medium">Medium</span></td><td>m = 2, BFS colouring</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/possible-bipartition/" target="_blank" rel="noopener">886. Possible Bipartition</a></td><td><span class="chip medium">Medium</span></td><td>m = 2</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/flower-planting-with-no-adjacent/" target="_blank" rel="noopener">1042. Flower Planting With No Adjacent</a></td><td><span class="chip medium">Medium</span></td><td>m = 4, degree ≤ 3 ⇒ greedy works</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/sudoku-solver/" target="_blank" rel="noopener">37. Sudoku Solver</a></td><td><span class="chip hard">Hard</span></td><td>81 vertices, 9 colours</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1668" target="_blank" rel="noopener">Building Teams</a></td><td><span class="chip easy">Easy</span></td><td>2-colouring</td></tr>
+              <tr><td><span class="plat">AtCoder</span></td><td><a href="https://atcoder.jp/contests/abc199/tasks/abc199_d" target="_blank" rel="noopener">ABC199 D · RGB Coloring 2</a></td><td><span class="chip hard">Hard</span></td><td>count 3-colourings</td></tr>
+              <tr><td><span class="plat">AtCoder</span></td><td><a href="https://atcoder.jp/contests/abc327/tasks/abc327_d" target="_blank" rel="noopener">ABC327 D · Good Tuple Problem</a></td><td><span class="chip medium">Medium</span></td><td>bipartite check</td></tr>
+              <tr><td><span class="plat">Codeforces</span></td><td><a href="https://codeforces.com/problemset/problem/862/B" target="_blank" rel="noopener">862B · Mahmoud and Ehab and the bipartiteness</a></td><td><span class="chip easy">1300</span></td><td>2-colour, then count</td></tr>
+              <tr><td><span class="plat">Codeforces</span></td><td><a href="https://codeforces.com/problemset/problem/1144/F" target="_blank" rel="noopener">1144F · Graph Without Long Directed Paths</a></td><td><span class="chip medium">1700</span></td><td>2-colouring decides edge directions</td></tr>
+              <tr><td><span class="plat">CodeChef</span></td><td><a href="https://www.codechef.com/practice-old/tags/bipartite-graphs" target="_blank" rel="noopener">Bipartite graphs tag — practice list</a></td><td><span class="chip">mixed</span></td><td>m = 2 family</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="hamiltonian-cycle.html"><small>← Previous</small>03 · Hamiltonian Cycle</a>
+          <a class="next" href="index.html#next"><small>Next →</small>Back to the track · what’s coming next</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+  <script src="../assets/js/tracer.js"></script>
+  <script src="../assets/js/pages/coloring.js"></script>
+</body>
+</html>

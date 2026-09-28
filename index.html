@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RecursionVerse — Recursion, Backtracking, DP &amp; Greedy, visualized</title>
+  <meta name="description" content="Learn recursion, backtracking, dynamic programming and greedy with animated state-space trees, call stacks, memory views, CLRS pseudocode and C++ / Java / Python code.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="" data-active="home"></header>
+
+  <main>
+    <!-- ================= HERO ================= -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <div class="eyebrow">Choices + Decisions → Recursion</div>
+          <h1>See every call.<br><span class="grad">Understand every choice.</span></h1>
+          <p class="lede">An interactive course on <strong>Recursion, Backtracking, Dynamic Programming and Greedy</strong>. Every problem comes with an animated state-space tree, a live call stack, a memory view, CLRS-style pseudocode and code in C++, Java and Python.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="backtracking/index.html">Start with Backtracking →</a>
+            <a class="btn" href="#big-idea">The one big idea ↓</a>
+          </div>
+          <div class="stat-row">
+            <div class="stat"><b class="grad-text">4</b><span>worked problems</span></div>
+            <div class="stat"><b class="grad-text">3</b><span>languages + CLRS</span></div>
+            <div class="stat"><b class="grad-text">40+</b><span>practice links</span></div>
+            <div class="stat"><b class="grad-text">1</b><span>template for all</span></div>
+          </div>
+        </div>
+        <div class="hero-canvas-wrap reveal">
+          <canvas id="hero3d" aria-label="Rotating 3-D recursion tree. Drag to rotate."></canvas>
+          <div class="canvas-top">
+            <div class="mode-btns" role="group" aria-label="Where does the answer live?">
+              <button type="button" data-m="leaf" aria-pressed="false">Leaf · Recursion</button>
+              <button type="button" data-m="root" aria-pressed="false">Root · DP</button>
+              <button type="button" data-m="path" aria-pressed="true">Path · Backtracking</button>
+            </div>
+          </div>
+          <div class="canvas-hud"><span class="canvas-caption" id="hero-cap">drag to rotate</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= BIG IDEA ================= -->
+    <section class="section" id="big-idea">
+      <div class="container">
+        <div class="section-head reveal">
+          <div class="eyebrow">The one big idea</div>
+          <h2>Same tree. Three places to find the answer.</h2>
+          <p>Every recursive solution draws a tree of <em>choices</em>. What changes between techniques is <strong>where the answer lives</strong> in that tree.</p>
+        </div>
+        <div class="grid grid-3">
+          <div class="card idea leaf reveal">
+            <div class="tag">Recursion</div>
+            <h3>Answer at the <span class="cyan">leaf</span></h3>
+            <div data-mini="leaf"></div>
+            <p class="muted">Each call carries its own copy of the partial answer (pass by value). When the input is exhausted, the <strong>leaf</strong> holds a finished answer — print it.</p>
+          </div>
+          <div class="card idea root reveal">
+            <div class="tag">Dynamic Programming</div>
+            <h3>Answer at the <span class="amber">root</span></h3>
+            <div data-mini="root"></div>
+            <p class="muted">Children compute sub-answers; each parent <em>combines</em> them (max, min, sum, count). The <strong>root</strong> ends up holding the final answer — and repeated sub-problems are cached.</p>
+          </div>
+          <div class="card idea path reveal">
+            <div class="tag">Backtracking</div>
+            <h3>Answer in the <span class="accent">path</span></h3>
+            <div data-mini="path"></div>
+            <p class="muted">One shared state is modified on the way down and <em>reverted</em> on the way up. The sequence of choices on the <strong>root → leaf path</strong> is the answer.</p>
+          </div>
+        </div>
+
+        <div class="card mt-3 reveal">
+          <div class="flow">
+            <div class="fnode">Choices + Decisions<small>a problem where you pick, one step at a time</small></div>
+            <div class="farrow">→</div>
+            <div class="fnode main">Recursion<small style="color:rgba(255,255,255,.85)">explore the choice tree</small></div>
+            <div class="farrow">→</div>
+            <div class="fbranches">
+              <div class="fnode dnc">Divide &amp; Conquer<small>split · solve · combine — the laborious work</small></div>
+              <div class="fnode dp">Dynamic Programming<small>optimal (max / min / count) · reuse sub-answers</small></div>
+              <div class="fnode bt">Backtracking<small>all possibilities · controlled recursion + shared state</small></div>
+              <div class="fnode gr">Greedy<small>commit to the locally best choice — only when that is provably safe</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TOPICS ================= -->
+    <section class="section" id="topics">
+      <div class="container">
+        <div class="section-head reveal">
+          <div class="eyebrow">Tracks</div>
+          <h2>Pick a track</h2>
+          <p>Backtracking is live now. The other tracks are being written and will appear in the same tabs.</p>
+        </div>
+        <div class="grid grid-4">
+          <a class="card card-link muted reveal" href="recursion.html">
+            <div class="card-icon" style="background:var(--accent-2-soft);color:var(--accent-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v4M12 7l-5 5M12 7l5 5M7 12v4M17 12v4"/><circle cx="12" cy="3" r="1.5"/></svg></div>
+            <div class="card-kicker">Track 1 <span class="chip">coming soon</span></div>
+            <h3>Recursion</h3>
+            <p class="muted">Base case, recursive case, the call stack, and the input/output method.</p>
+          </a>
+          <a class="card card-link reveal" href="backtracking/index.html">
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10a6 6 0 0 1 12 0v2"/><path d="M13 9l3 3 3-3"/></svg></div>
+            <div class="card-kicker">Track 2 <span class="chip good" style="color:var(--good);background:var(--good-soft);border-color:transparent">live</span></div>
+            <h3>Backtracking</h3>
+            <p class="muted">Pass by reference + controlled recursion. One template, mapped onto every problem.</p>
+            <div class="card-foot"><span class="arrow-link">Open track →</span><span class="chip accent">4 problems</span></div>
+          </a>
+          <a class="card card-link muted reveal" href="dp.html">
+            <div class="card-icon" style="background:var(--amber-soft);color:var(--amber)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+            <div class="card-kicker">Track 3 <span class="chip">coming soon</span></div>
+            <h3>Dynamic Programming</h3>
+            <p class="muted">Overlapping sub-problems, memoisation, tabulation — the answer at the root.</p>
+          </a>
+          <a class="card card-link muted reveal" href="greedy.html">
+            <div class="card-icon" style="background:var(--accent-3-soft);color:var(--accent-3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 18l6-6 4 4 6-8"/><path d="M15 8h5v5"/></svg></div>
+            <div class="card-kicker">Track 4 <span class="chip">coming soon</span></div>
+            <h3>Greedy</h3>
+            <p class="muted">When is the locally best choice globally safe — and when does it fail?</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FEATURES ================= -->
+    <section class="section" id="inside">
+      <div class="container">
+        <div class="section-head reveal">
+          <div class="eyebrow">Inside every problem page</div>
+          <h2>Built to make recursion visible</h2>
+        </div>
+        <div class="grid grid-3">
+          <div class="card feature reveal"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="4" r="2"/><circle cx="6" cy="13" r="2"/><circle cx="18" cy="13" r="2"/><circle cx="6" cy="21" r="1.6"/><path d="M11 5.7 7 11.4M13 5.7l4 5.7M6 15v4.4"/></svg></div><div><h4>Animated state-space tree</h4><p>Every call, every rejected choice, every answer — step forward and back through the exact recursion.</p></div></div>
+          <div class="card feature reveal"><div class="card-icon" style="background:var(--accent-3-soft);color:var(--accent-3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="5" rx="1.5"/><rect x="4" y="10" width="16" height="5" rx="1.5"/><rect x="4" y="17" width="16" height="4" rx="1.5"/></svg></div><div><h4>Call stack &amp; memory</h4><p>A 3-D call stack plus the arrays in memory, so you see what pass-by-reference really shares.</p></div></div>
+          <div class="card feature reveal"><div class="card-icon" style="background:var(--amber-soft);color:var(--amber)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></div><div><h4>CLRS-style pseudocode</h4><p>Textbook pseudocode with the current line highlighted while the animation runs.</p></div></div>
+          <div class="card feature reveal"><div class="card-icon" style="background:var(--accent-2-soft);color:var(--accent-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg></div><div><h4>C++ · Java · Python</h4><p>Clean, tested solutions with the template slots colour-coded.</p></div></div>
+          <div class="card feature reveal"><div class="card-icon" style="background:var(--good-soft);color:var(--good)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div><h4>One pattern, mapped</h4><p>Each problem is mapped slot-by-slot onto the same backtracking template.</p></div></div>
+          <div class="card feature reveal"><div class="card-icon" style="background:var(--bad-soft);color:var(--bad)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></div><div><h4>Exercises + practice</h4><p>Exercises with answers, plus similar problems on GFG, LeetCode, Codeforces, CodeChef, AtCoder and CSES.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PROBLEMS ================= -->
+    <section class="section" id="problems">
+      <div class="container">
+        <div class="section-head reveal">
+          <div class="eyebrow">Backtracking · worked problems</div>
+          <h2>Start here</h2>
+        </div>
+        <div class="grid grid-4">
+          <a class="card card-link pcard reveal" href="backtracking/permutations.html">
+            <div class="card-kicker"><span class="num">01</span> strings</div>
+            <h3>All Permutations</h3>
+            <p class="muted">Two ways: input/output copies vs swapping in place — and how to kill duplicates.</p>
+            <div class="meta"><span class="chip medium">Medium</span><span class="chip">O(n·n!)</span></div>
+          </a>
+          <a class="card card-link pcard reveal" href="backtracking/k-swaps.html">
+            <div class="card-kicker"><span class="num">02</span> greedy trap</div>
+            <h3>Largest Number in K Swaps</h3>
+            <p class="muted">Why greedy fails on duplicate digits (4577 → 7754, not 7745).</p>
+            <div class="meta"><span class="chip medium">Medium</span><span class="chip">don't be greedy</span></div>
+          </a>
+          <a class="card card-link pcard reveal" href="backtracking/hamiltonian-cycle.html">
+            <div class="card-kicker"><span class="num">03</span> graphs</div>
+            <h3>Hamiltonian Cycle</h3>
+            <p class="muted">Visit every vertex once and come home. Path + visited[] by reference.</p>
+            <div class="meta"><span class="chip hard">Hard</span><span class="chip">O(n!)</span></div>
+          </a>
+          <a class="card card-link pcard reveal" href="backtracking/graph-coloring.html">
+            <div class="card-kicker"><span class="num">04</span> graphs</div>
+            <h3>Graph Colouring (m-colouring)</h3>
+            <p class="muted">Assign colours so no edge joins two equal colours — isSafe() in action.</p>
+            <div class="meta"><span class="chip medium">Medium</span><span class="chip">O(m^V · V)</span></div>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer data-footer data-base=""></footer>
+
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/tree3d.js"></script>
+  <script>
+    RV.ready(function () {
+      var cap = document.getElementById('hero-cap');
+      var btns = document.querySelectorAll('.mode-btns button');
+      var tree = new RV.Tree3D(document.getElementById('hero3d'), {
+        alphabet: 'abcd', mode: 'path', cycle: true,
+        onCaption: function (s, mode) {
+          cap.textContent = s;
+          btns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.m === mode)); });
+        }
+      });
+      btns.forEach(function (b) { b.addEventListener('click', function () { tree.setMode(b.dataset.m); }); });
+    });
+  </script>
+</body>
+</html>

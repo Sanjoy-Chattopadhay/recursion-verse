@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hamiltonian Cycle — Backtracking · RecursionVerse</title>
+  <meta name="description" content="Hamiltonian cycle with backtracking: path and visited[] by reference, base-case design, why we start at vertex 0, animated state-space tree on an editable graph, CLRS pseudocode, C++/Java/Python.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="backtracking"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Backtracking</a><span>/</span><span>Hamiltonian cycle</span></div>
+      <div class="eyebrow">Problem 03 · graphs · visited[]</div>
+      <h1>Hamiltonian Cycle</h1>
+      <div class="chips mt-1"><span class="chip hard">Hard</span><span class="chip accent">backtracking</span><span class="chip cyan">graphs</span><span class="chip">O(n!)</span><span class="chip">NP-complete</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/hamiltonian-path2522/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Hamiltonian Path</a>
+        <a class="plink" href="https://www.geeksforgeeks.org/dsa/hamiltonian-cycle/" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Hamiltonian Cycle</a>
+        <a class="plink" href="https://cses.fi/problemset/task/1690" target="_blank" rel="noopener"><span class="dot dot-cses"></span>CSES · Hamiltonian Flights</a>
+        <a class="plink" href="https://atcoder.jp/contests/abc054/tasks/abc054_c" target="_blank" rel="noopener"><span class="dot dot-at"></span>AtCoder ABC054 C</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <div class="prose problem-statement">
+          <p>Given an undirected graph <code>G = (V, E)</code> with <code>n</code> vertices (adjacency matrix <code>A</code>), find a <strong>cycle</strong> that</p>
+          <ol><li>visits <strong>every vertex exactly once</strong>, and</li><li><strong>returns to the starting vertex</strong>.</li></ol>
+          <p>A <strong>Hamiltonian path</strong> relaxes rule 2: it must cover every vertex but need not come back. Vertices are 0-indexed on this page.</p>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="card card-flat"><div data-hmini="pentagon"></div><p class="muted mb-0"><strong class="good">H-cycle exists.</strong> 0 → 1 → 3 → 4 → 2 → 0 (reverse direction is the same cycle).</p></div>
+          <div class="card card-flat"><div data-hmini="hex"></div><p class="muted mb-0"><strong class="good">H-cycle exists.</strong> 0 → 1 → 2 → 3 → 4 → 5 → 0.</p></div>
+          <div class="card card-flat"><div data-hmini="bowtie"></div><p class="muted mb-0"><strong class="amber">Only an H-path.</strong> Vertex 2 is an <em>articulation point</em>: a cycle would have to pass through it twice. Path 0 → 1 → 3 → 2 → 4 → 5.</p></div>
+        </div>
+      </section>
+
+      <section class="section" id="design" data-toc="Designing the recursion">
+        <h2>Designing the recursion</h2>
+        <div class="grid grid-2">
+          <div class="card card-flat">
+            <h4>1 · What do we need to remember?</h4>
+            <p class="muted">The vertices placed so far (<code>path</code>) and which vertices are already used (<code>visited</code>). Suppose <code>path = [0, 1, 3]</code>:</p>
+            <div class="cells" style="margin:8px 0">
+              <div class="cell t"><span class="v">T</span><span class="i">0</span></div><div class="cell t"><span class="v">T</span><span class="i">1</span></div><div class="cell f"><span class="v">F</span><span class="i">2</span></div><div class="cell t"><span class="v">T</span><span class="i">3</span></div><div class="cell f"><span class="v">F</span><span class="i">4</span></div>
+            </div>
+            <p class="muted mb-0">Both are <strong>shared</strong> (by reference) and changed/undone as we go.</p>
+          </div>
+          <div class="card card-flat">
+            <h4>2 · What are the choices?</h4>
+            <p class="muted mb-0">From the last vertex <code>u = path[k−1]</code> we may go to <strong>any vertex v that is not visited and adjacent to u</strong>. With path [0, 1, 3], v must be a neighbour of 3 that is still F in visited.</p>
+          </div>
+          <div class="card card-flat">
+            <h4>3 · Base case design</h4>
+            <p class="muted">When <code>path.size() == n</code> every vertex is on the path — but that is only a Hamiltonian <em>path</em>. For a <em>cycle</em> we also need the edge from the last vertex back to the first:</p>
+            <pre class="code" style="padding:10px 0;background:var(--code-bg);border-radius:10px"><span class="ln"><span class="tok-kw">if</span> (path.size() == n)</span><span class="ln">    <span class="tok-kw">return</span> A[path.back()][path[<span class="tok-num">0</span>]] == <span class="tok-num">1</span>;</span></pre>
+          </div>
+          <div class="card card-flat">
+            <h4>4 · Why always start at vertex 0?</h4>
+            <p class="muted mb-0">A cycle can be <strong>rotated</strong>: 0 → 1 → 3 → 4 → 2 → 0 and 2 → 0 → 1 → 3 → 4 → 2 are the same cycle. Every Hamiltonian cycle passes through vertex 0, so fixing it as the start loses nothing and divides the work by n.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="pattern" data-toc="Map to the template">
+        <h2>Map it onto the template</h2>
+        <div class="map-grid">
+          <div class="map-row" style="--c:var(--s-change)"><span class="k">Shared state</span><span class="v"><code>path[0..n−1]</code> and <code>visited[0..n−1]</code>; <code>k</code> = how many vertices are placed.</span></div>
+          <div class="map-row" style="--c:var(--s-base)"><span class="k">Base case</span><span class="v"><code>k == n</code> → success iff <code>A[path[n−1]][path[0]] == 1</code>.</span></div>
+          <div class="map-row" style="--c:var(--s-choice)"><span class="k">Choices</span><span class="v">every vertex <code>v = 0 … n−1</code>.</span></div>
+          <div class="map-row" style="--c:var(--s-valid)"><span class="k">isValid</span><span class="v"><code>!visited[v] &amp;&amp; A[u][v] == 1</code> with <code>u = path[k−1]</code>.</span></div>
+          <div class="map-row" style="--c:var(--s-change)"><span class="k">Change</span><span class="v"><code>path[k] = v; visited[v] = true;</code></span></div>
+          <div class="map-row" style="--c:var(--s-recurse)"><span class="k">Recurse</span><span class="v"><code>if (hamCycle(k + 1)) return true;</code> — stop at the first cycle.</span></div>
+          <div class="map-row" style="--c:var(--s-revert)"><span class="k">Revert</span><span class="v"><code>visited[v] = false; path[k] = −1;</code></span></div>
+        </div>
+      </section>
+
+      <section class="section" id="visualize" data-toc="Visualize it">
+        <h2>Visualize it</h2>
+        <p class="muted">The graph panel shows the path growing (numbers = order on the path), the candidate edge being tried (dashed) and the final closing check. Pick the <em>articulation point</em> graph to watch every branch fail.</p>
+        <div id="viz-ham" class="mt-2"></div>
+        <div class="card mt-2">
+          <div class="flex wrap gap-2 items-center" style="justify-content:space-between"><h4 class="mb-0">Edit the graph</h4><span class="faint" style="font-size:.84rem">click a cell to add / remove that edge — the visualizer re-runs instantly</span></div>
+          <div id="ham-editor" class="mt-2" style="overflow-x:auto"></div>
+        </div>
+      </section>
+
+      <section class="section" id="dry-run" data-toc="Dry run">
+        <h2>Dry run (from the notes)</h2>
+        <div class="split">
+          <div class="table-wrap" style="min-width:0">
+            <table class="table" style="min-width:0">
+              <thead><tr><th></th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead>
+              <tbody>
+                <tr><th>0</th><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td></tr>
+                <tr><th>1</th><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td></tr>
+                <tr><th>2</th><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+                <tr><th>3</th><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td></tr>
+                <tr><th>4</th><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="dry">
+            <div class="d"><span><code>k=1</code>, curr 0, path [0]. neighbours(0) = [1, 2, 4] → select <b>1</b>.</span></div>
+            <div class="d"><span><code>k=2</code>, curr 1, path [0, 1]. neighbours(1) = [0, 2, 3, 4]; 0 is visited → select <b>2</b>.</span></div>
+            <div class="d"><span><code>k=3</code>, curr 2, path [0, 1, 2]. neighbours(2) = [0, 1, 3]; 0 and 1 visited → select <b>3</b>.</span></div>
+            <div class="d"><span><code>k=4</code>, curr 3, path [0, 1, 2, 3]. neighbours(3) = [1, 2, 4]; 1 and 2 visited → select <b>4</b>.</span></div>
+            <div class="d"><span><code>k=5 = n</code>, path [0, 1, 2, 3, 4]. Check A[4][0] = 1 → <b class="good">TRUE</b>. Cycle 0 → 1 → 2 → 3 → 4 → 0.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="clrs" data-toc="CLRS pseudocode">
+        <h2>Algorithm (CLRS style)</h2>
+<script type="text/plain" data-clrs>
+HAMILTONIAN-CYCLE(A, n)
+    path[0] ← 0
+    for i ← 0 to n − 1
+        visited[i] ← FALSE
+    visited[0] ← TRUE
+    if HAM-CYCLE(A, path, visited, 1, n)
+        return TRUE
+    return FALSE
+
+HAM-CYCLE(A, path, visited, k, n)
+    if k = n
+        if A[path[n − 1]][path[0]] = 1
+            return TRUE
+        else return FALSE
+    u ← path[k − 1]
+    for v ← 0 to n − 1
+        if visited[v] = FALSE and A[u][v] = 1
+            path[k] ← v
+            visited[v] ← TRUE
+            if HAM-CYCLE(A, path, visited, k + 1, n)
+                return TRUE
+            visited[v] ← FALSE
+            path[k] ← NIL
+    return FALSE
+</script>
+      </section>
+
+      <section class="section" id="code" data-toc="Code">
+        <h2>Code</h2>
+        <div class="code-card">
+<script type="text/plain" data-lang="cpp">
+#include <bits/stdc++.h>
+using namespace std;
+
+bool hamCycle(const vector<vector<int>>& A, vector<int>& path,
+              vector<bool>& visited, int k) {
+    int n = A.size();
+    if (k == n)                                        @@base
+        return A[path[n - 1]][path[0]] == 1;           @@base-
+    int u = path[k - 1];
+    for (int v = 0; v < n; v++) {                      @@choices
+        if (visited[v] || !A[u][v]) continue;          @@valid
+        path[k] = v; visited[v] = true;                @@change
+        if (hamCycle(A, path, visited, k + 1))         @@recurse
+            return true;                               @@recurse-
+        visited[v] = false; path[k] = -1;              @@revert
+    }
+    return false;
+}
+
+int main() {
+    vector<vector<int>> A = {{0,1,1,0,1},
+                             {1,0,1,1,1},
+                             {1,1,0,1,0},
+                             {0,1,1,0,1},
+                             {1,1,0,1,0}};
+    int n = A.size();
+    vector<int> path(n, -1);
+    vector<bool> visited(n, false);
+    path[0] = 0; visited[0] = true;                     // fix the start vertex
+    if (hamCycle(A, path, visited, 1)) {
+        for (int v : path) cout << v << ' ';
+        cout << path[0] << '\n';                        // 0 1 2 3 4 0
+    } else {
+        cout << "No Hamiltonian cycle\n";
+    }
+}
+</script>
+<script type="text/plain" data-lang="java">
+import java.util.*;
+
+public class HamiltonianCycle {
+    static boolean hamCycle(int[][] A, int[] path, boolean[] visited, int k) {
+        int n = A.length;
+        if (k == n)                                    @@base
+            return A[path[n - 1]][path[0]] == 1;       @@base-
+        int u = path[k - 1];
+        for (int v = 0; v < n; v++) {                  @@choices
+            if (visited[v] || A[u][v] == 0) continue;  @@valid
+            path[k] = v; visited[v] = true;            @@change
+            if (hamCycle(A, path, visited, k + 1))     @@recurse
+                return true;                           @@recurse-
+            visited[v] = false; path[k] = -1;          @@revert
+        }
+        return false;
+    }
+
+    public static void main(String[] args) {
+        int[][] A = {{0,1,1,0,1}, {1,0,1,1,1}, {1,1,0,1,0}, {0,1,1,0,1}, {1,1,0,1,0}};
+        int n = A.length;
+        int[] path = new int[n];
+        Arrays.fill(path, -1);
+        boolean[] visited = new boolean[n];
+        path[0] = 0; visited[0] = true;
+        if (hamCycle(A, path, visited, 1))
+            System.out.println(Arrays.toString(path) + " -> " + path[0]);
+        else
+            System.out.println("No Hamiltonian cycle");
+    }
+}
+</script>
+<script type="text/plain" data-lang="python">
+def ham_cycle(A, path, visited, k):
+    n = len(A)
+    if k == n:                                         @@base
+        return A[path[n - 1]][path[0]] == 1            @@base-
+    u = path[k - 1]
+    for v in range(n):                                 @@choices
+        if visited[v] or not A[u][v]:                  @@valid
+            continue                                   @@valid-
+        path[k] = v; visited[v] = True                 @@change
+        if ham_cycle(A, path, visited, k + 1):         @@recurse
+            return True                                @@recurse-
+        visited[v] = False; path[k] = -1               @@revert
+    return False
+
+
+A = [[0, 1, 1, 0, 1],
+     [1, 0, 1, 1, 1],
+     [1, 1, 0, 1, 0],
+     [0, 1, 1, 0, 1],
+     [1, 1, 0, 1, 0]]
+n = len(A)
+path = [-1] * n
+visited = [False] * n
+path[0], visited[0] = 0, True
+print(path + [0] if ham_cycle(A, path, visited, 1) else "No Hamiltonian cycle")
+</script>
+        </div>
+        <div class="callout tip mt-2"><span class="ic">✓</span><p><strong>Hamiltonian path instead?</strong> Drop the closing-edge check (<code>if (k == n) return true;</code>) and try every vertex as the start, because a path — unlike a cycle — cannot be rotated.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Complexity">
+        <h2>Complexity</h2>
+        <div class="grid grid-3">
+          <div class="kbox"><span class="k">Time</span><span class="v">O(n!)</span><span class="faint" style="font-size:.86rem">at most (n−1)! orderings after fixing vertex 0, each extended with an O(n) neighbour scan</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(n)</span><span class="faint" style="font-size:.86rem">path, visited and a recursion depth of n</span></div>
+          <div class="kbox"><span class="k">Faster exact</span><span class="v">O(2ⁿ · n²)</span><span class="faint" style="font-size:.86rem">bitmask DP (Held–Karp) — practical up to n ≈ 20</span></div>
+        </div>
+        <p class="muted mt-2">Deciding whether a Hamiltonian cycle exists is <strong>NP-complete</strong>; no polynomial algorithm is known. Backtracking with good pruning is the standard exact approach for small graphs.</p>
+      </section>
+
+      <section class="section" id="pitfalls" data-toc="Pitfalls">
+        <h2>Common mistakes</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Forgetting the closing edge.</strong> <code>k == n</code> alone only proves a Hamiltonian path.</p></div>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Not un-marking <code>visited[v]</code>.</strong> After one failed branch the vertex stays blocked forever and valid cycles are missed.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Counting cycles:</strong> starting from 0, each undirected cycle is found twice (clockwise and anticlockwise). Divide by 2 — or require <code>path[1] &lt; path[n−1]</code>.</p></div>
+      </section>
+
+      <section class="section" id="exercises" data-toc="Exercises">
+        <h2>Exercises</h2>
+        <details class="ex"><summary><span class="qn">E1</span><span class="q">For K4 (complete graph on 4 vertices), how many Hamiltonian cycles does the find-all version print? How many distinct cycles are there?</span></summary>
+          <div class="ans"><p>Starting at 0, the remaining 3 vertices can be ordered in 3! = <strong>6</strong> ways, all valid. Each undirected cycle is counted twice, so there are <strong>3</strong> distinct cycles. In general (n−1)!/2.</p></div></details>
+        <details class="ex"><summary><span class="qn">E2</span><span class="q">Prove: a graph with an articulation point has no Hamiltonian cycle.</span></summary>
+          <div class="ans"><p>Removing the articulation point x splits the graph into at least two components C₁, C₂. A cycle through all vertices must go from C₁ to C₂ and back; every such crossing passes through x, so x would be visited at least twice — contradiction.</p></div></details>
+        <details class="ex"><summary><span class="qn">E3</span><span class="q">Add a pruning rule: if some unvisited vertex has fewer than 2 unvisited-or-endpoint neighbours, stop. Why is it safe?</span></summary>
+          <div class="ans"><p>In the final cycle every vertex has exactly two cycle-neighbours. If an unvisited vertex cannot get two neighbours any more, no completion of the current path can be a cycle — the whole subtree is hopeless, so prune it.</p></div></details>
+        <details class="ex"><summary><span class="qn">E4</span><span class="q">Count Hamiltonian paths that start at vertex 0 (AtCoder ABC054 C). What changes in the template?</span></summary>
+          <div class="ans"><p>Base case: <code>k == n → count++</code> (no closing-edge check), and do not stop after the first success — use the find-all flavour.</p></div></details>
+        <details class="ex"><summary><span class="qn">E5</span><span class="q">A knight must visit every square of a 5×5 board exactly once. Map it to this page.</span></summary>
+          <div class="ans"><p>Vertices = squares, edges = knight moves. It is a Hamiltonian path problem on that graph. Choices: the 8 knight moves; isValid: inside the board and unvisited; ordering moves by Warnsdorff’s rule (fewest onward moves first) is a powerful pruning heuristic.</p></div></details>
+        <details class="ex"><summary><span class="qn">E6</span><span class="q">When would you switch from backtracking to bitmask DP?</span></summary>
+          <div class="ans"><p>When you need the <em>count</em> or the <em>cheapest</em> Hamiltonian path/cycle (an optimum → DP) and n ≤ 20: states (mask, last) number 2ⁿ·n. Backtracking stays simpler when you only need one cycle and good pruning finds it fast.</p></div></details>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/hamiltonian-path2522/1" target="_blank" rel="noopener">Hamiltonian Path</a></td><td><span class="chip medium">Medium</span></td><td>no closing edge; try every start</td></tr>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/dsa/hamiltonian-cycle/" target="_blank" rel="noopener">Hamiltonian Cycle (article)</a></td><td><span class="chip">reading</span></td><td>this page</td></tr>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/dsa/print-all-hamiltonian-cycles-in-an-undirected-graph/" target="_blank" rel="noopener">Print all Hamiltonian cycles</a></td><td><span class="chip">reading</span></td><td>find-all flavour</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/unique-paths-iii/" target="_blank" rel="noopener">980. Unique Paths III</a></td><td><span class="chip hard">Hard</span></td><td>Hamiltonian paths on a grid</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/shortest-path-visiting-all-nodes/" target="_blank" rel="noopener">847. Shortest Path Visiting All Nodes</a></td><td><span class="chip hard">Hard</span></td><td>BFS over (mask, node)</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/find-the-shortest-superstring/" target="_blank" rel="noopener">943. Find the Shortest Superstring</a></td><td><span class="chip hard">Hard</span></td><td>TSP-style bitmask DP</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1690" target="_blank" rel="noopener">Hamiltonian Flights</a></td><td><span class="chip hard">Hard</span></td><td>count paths, bitmask DP</td></tr>
+              <tr><td><span class="plat">AtCoder</span></td><td><a href="https://atcoder.jp/contests/abc054/tasks/abc054_c" target="_blank" rel="noopener">ABC054 C · One-stroke Path</a></td><td><span class="chip easy">Easy</span></td><td>count H-paths from vertex 1</td></tr>
+              <tr><td><span class="plat">AtCoder</span></td><td><a href="https://atcoder.jp/contests/abc183/tasks/abc183_c" target="_blank" rel="noopener">ABC183 C · Travel</a></td><td><span class="chip easy">Easy</span></td><td>tours with total time exactly K</td></tr>
+              <tr><td><span class="plat">Codeforces</span></td><td><a href="https://codeforces.com/problemset/problem/1950/G" target="_blank" rel="noopener">1950G · Shuffling Songs</a></td><td><span class="chip medium">1900</span></td><td>longest path, bitmask DP</td></tr>
+              <tr><td><span class="plat">Codeforces</span></td><td><a href="https://codeforces.com/problemset/problem/11/D" target="_blank" rel="noopener">11D · A Simple Task</a></td><td><span class="chip hard">2200</span></td><td>count simple cycles</td></tr>
+              <tr><td><span class="plat">CodeChef</span></td><td><a href="https://www.codechef.com/practice-old/tags/backtracking" target="_blank" rel="noopener">Backtracking tag — practice list</a></td><td><span class="chip">mixed</span></td><td>filter by difficulty</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="k-swaps.html"><small>← Previous</small>02 · Largest Number in K Swaps</a>
+          <a class="next" href="graph-coloring.html"><small>Next problem →</small>04 · Graph Colouring</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+  <script src="../assets/js/tracer.js"></script>
+  <script src="../assets/js/pages/hamiltonian.js"></script>
+</body>
+</html>

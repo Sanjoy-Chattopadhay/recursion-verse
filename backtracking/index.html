@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backtracking — from recursion to the universal template · RecursionVerse</title>
+  <meta name="description" content="Backtracking explained visually: answer at the leaf vs root vs path, controlled recursion, pass by value vs reference, the universal template in C++/Java/Python/CLRS, and a pattern map for every problem.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="backtracking"></header>
+
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><span>Backtracking</span></div>
+        <div class="eyebrow">Track 2 · Backtracking</div>
+        <h1>Backtracking =<br><span class="grad">Pass by Reference + Controlled Recursion</span></h1>
+        <p class="lede">We start from plain recursion, see <em>where</em> each technique finds its answer, learn why backtracking shares one state and undoes its changes, and end with a single template that solves every problem on this track.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#where">Start the lesson ↓</a>
+          <a class="btn" href="#template">Jump to the template</a>
+        </div>
+      </div>
+      <div class="hero-canvas-wrap reveal">
+        <canvas id="bt3d" aria-label="3-D state-space tree of permutations of abcd. Drag to rotate."></canvas>
+        <div class="canvas-top">
+          <div class="mode-btns" id="bt3d-modes" role="group" aria-label="Where does the answer live?">
+            <button type="button" data-m="leaf" aria-pressed="false">Leaf</button>
+            <button type="button" data-m="root" aria-pressed="false">Root</button>
+            <button type="button" data-m="path" aria-pressed="true">Path</button>
+          </div>
+        </div>
+        <div class="canvas-hud"><span class="canvas-caption" id="bt3d-cap">drag to rotate · permutations of "abcd" in 3-D</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+
+      <!-- ============ 1. FAMILY ============ -->
+      <section class="section-tight" id="family" data-toc="Choices + decisions">
+        <div class="eyebrow">01 · Where it all starts</div>
+        <h2>Choices + decisions → recursion</h2>
+        <div class="prose">
+          <p>Whenever a problem says “pick one option, then pick again, then again…”, you are looking at a <strong>tree of choices</strong>. Recursion is simply the machine that walks that tree. The techniques differ in how they walk it:</p>
+        </div>
+        <div class="card mt-2">
+          <div class="flow">
+            <div class="fnode">Choices + Decisions<small>pick, then pick again…</small></div>
+            <div class="farrow">→</div>
+            <div class="fnode main">Recursion<small style="color:rgba(255,255,255,.85)">walks the choice tree</small></div>
+            <div class="farrow">→</div>
+            <div class="fbranches">
+              <div class="fnode dnc">Divide &amp; Conquer<small>split · solve · combine — the laborious work</small></div>
+              <div class="fnode dp">Dynamic Programming<small>“optimal” (max / min / count) — answer at the root</small></div>
+              <div class="fnode bt">Backtracking<small>“all possible” — answer in the path</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="formula mt-3">Backtracking <span class="plus">=</span> <span class="pink">Pass by Reference</span> <span class="plus">+</span> <span class="accent">Controlled Recursion</span></div>
+        <div class="grid grid-2 mt-3">
+          <div class="card card-flat">
+            <h4 class="pink">Pass by reference</h4>
+            <p class="muted">All calls share <em>one</em> state (a string, an array, a board). A call changes it before going deeper and <strong>reverts</strong> the change when it comes back — that “coming back and undoing” is the <em>back-tracking</em>.</p>
+          </div>
+          <div class="card card-flat">
+            <h4 class="accent">Controlled recursion</h4>
+            <p class="muted">We only recurse <strong>if a condition holds</strong> (<code>isValid</code>). Branches that can never lead to an answer are cut before we enter them. That is what keeps an exponential search usable.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 2. WHERE ============ -->
+      <section class="section" id="where" data-toc="Leaf vs root vs path">
+        <div class="eyebrow">02 · The key insight</div>
+        <h2>Where does the answer live — leaf, root or path?</h2>
+        <div class="grid grid-3 mt-2">
+          <div class="card idea leaf">
+            <div class="tag">Recursion</div>
+            <h3>At the leaf</h3>
+            <div data-mini="leaf"></div>
+            <p class="muted">Each call gets <strong>copies</strong> (input, output). When the input is used up, the leaf <em>already holds</em> the answer. Print it. Nothing to undo.</p>
+          </div>
+          <div class="card idea root">
+            <div class="tag">DP</div>
+            <h3>At the root</h3>
+            <div data-mini="root"></div>
+            <p class="muted">A node can only answer after its <strong>sub-problems</strong> answer. Values flow upward and are combined; the root holds the final answer. Repeated sub-problems get cached.</p>
+          </div>
+          <div class="card idea path">
+            <div class="tag">Backtracking</div>
+            <h3>In the path</h3>
+            <div data-mini="path"></div>
+            <p class="muted">One <strong>shared</strong> state records the choices made so far. The answer is the sequence of choices on the <strong>root → leaf path</strong>; we undo each choice on the way back up.</p>
+          </div>
+        </div>
+        <p class="muted mt-3">Switch between the three below. Watch the <strong>memory</strong> panel: copies per frame (leaf), a table of sub-answers (root), one shared <code>path</code> + <code>used[]</code> (path).</p>
+        <div id="viz-idea" class="mt-2"></div>
+      </section>
+
+      <!-- ============ 3. CONTROLLED ============ -->
+      <section class="section" id="controlled" data-toc="Controlled recursion">
+        <div class="eyebrow">03 · Controlled recursion</div>
+        <h2>Only recurse if the condition holds</h2>
+        <div class="split">
+          <div class="prose">
+            <p>You stand at <strong>P</strong> and want to reach home <strong>H</strong>, which is south-west of you. From any cell you <em>could</em> go N, E, S or W. But going <strong>north or east</strong> only moves you away from home — there is no point making those choices.</p>
+            <p>So instead of recursing on all four moves, we recurse <strong>only if</strong> the move can still lead to home. Same answers, far fewer calls. On a 3 × 3 grid:</p>
+            <div class="grid grid-2">
+              <div class="kbox"><span class="k">Uncontrolled (N E S W)</span><span class="v bad">51 calls</span><span class="faint" style="font-size:.84rem">12 wandering paths, needs visited[]</span></div>
+              <div class="kbox"><span class="k">Controlled (S W)</span><span class="v good">19 calls</span><span class="faint" style="font-size:.84rem">6 shortest paths, no visited[] needed</span></div>
+            </div>
+            <div class="callout tip mt-2"><span class="ic">✓</span><p>This <code>if (isValid)</code> check before the recursive call is exactly what the backtracking template calls <strong>pruning</strong>. Good pruning is the difference between “runs in 1 ms” and “never finishes”.</p></div>
+          </div>
+          <div class="card card-flat">
+            <svg class="diagram" viewBox="0 0 320 250" role="img" aria-label="Grid with start P and home H; arrows show only south and west moves are useful">
+              <defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker>
+              <marker id="arb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--bad)"/></marker></defs>
+              <g style="stroke:var(--border-strong)" stroke-dasharray="4 5">
+                <line x1="40" y1="50" x2="280" y2="50"/><line x1="40" y1="125" x2="280" y2="125"/><line x1="40" y1="200" x2="280" y2="200"/>
+                <line x1="60" y1="30" x2="60" y2="220"/><line x1="160" y1="30" x2="160" y2="220"/><line x1="260" y1="30" x2="260" y2="220"/>
+              </g>
+              <circle cx="260" cy="50" r="17" style="fill:var(--accent-2-soft);stroke:var(--accent-2);stroke-width:2"/><text x="260" y="55" text-anchor="middle" style="font-weight:700">P</text>
+              <circle cx="60" cy="200" r="17" style="fill:var(--good-soft);stroke:var(--good);stroke-width:2"/><text x="60" y="205" text-anchor="middle" style="font-weight:700">H</text>
+              <path d="M260,70 L260,112" style="stroke:var(--accent);stroke-width:3" marker-end="url(#ar)"/><text x="268" y="96" class="dim" style="font-size:12px">S ✓</text>
+              <path d="M240,50 L178,50" style="stroke:var(--accent);stroke-width:3" marker-end="url(#ar)"/><text x="196" y="42" class="dim" style="font-size:12px">W ✓</text>
+              <path d="M260,31 L260,8" style="stroke:var(--bad);stroke-width:2.4" marker-end="url(#arb)"/><text x="268" y="22" style="font-size:12px;fill:var(--bad)">N ✗</text>
+              <path d="M279,50 L308,50" style="stroke:var(--bad);stroke-width:2.4" marker-end="url(#arb)"/><text x="284" y="72" style="font-size:12px;fill:var(--bad)">E ✗</text>
+              <path d="M240,60 C 200,150 120,130 76,188" style="stroke:var(--accent);stroke-width:2;fill:none" stroke-dasharray="6 5"/>
+              <text x="160" y="240" text-anchor="middle" class="faint" style="font-size:11px">choices that move away from H are never made</text>
+            </svg>
+          </div>
+        </div>
+        <div id="viz-maze" class="mt-3"></div>
+      </section>
+
+      <!-- ============ 4. MEMORY ============ -->
+      <section class="section" id="memory" data-toc="Pass by value vs reference">
+        <div class="eyebrow">04 · Memory</div>
+        <h2>Pass by value vs pass by reference</h2>
+        <div class="compare">
+          <div class="card vs-card">
+            <h4><span class="chip cyan">by value</span> each call gets a copy</h4>
+            <ul>
+              <li>The callee works on its own copy; the caller’s data is never touched.</li>
+              <li><strong>No undo needed</strong> — returning simply throws the copy away.</li>
+              <li>Cost: a copy per call → O(n) extra time and memory per frame.</li>
+              <li>Natural for the <em>input/output</em> method — answer at the <strong>leaf</strong>.</li>
+            </ul>
+          </div>
+          <div class="card vs-card">
+            <h4><span class="chip pink">by reference</span> all calls share one object</h4>
+            <ul>
+              <li>Every frame sees the same memory; a change made deep down is visible everywhere.</li>
+              <li><strong>You must undo</strong> every change before trying the next sibling choice.</li>
+              <li>Cost: O(1) per change — no copies. This is why backtracking uses it.</li>
+              <li>The answer is the current contents of the shared state = the <strong>path</strong>.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="muted mt-3">Build every string of length 3 over <code>{a, b}</code> three ways. The third one forgets to undo — watch the shared string grow into garbage and the output turn red.</p>
+        <div id="viz-pb" class="mt-2"></div>
+
+        <h3 class="mt-4">The same idea in code</h3>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+// BY VALUE: string s is copied into every call. No undo needed.
+void buildByValue(string s, int n, vector<string>& out) {
+    if ((int)s.size() == n) { out.push_back(s); return; }
+    for (char ch : {'a', 'b'})
+        buildByValue(s + ch, n, out);        // s + ch is a brand-new string
+}
+
+// BY REFERENCE: one string shared by every call. Change -> recurse -> undo.
+void buildByRef(string& s, int n, vector<string>& out) {
+    if ((int)s.size() == n) { out.push_back(s); return; }   // push_back copies s
+    for (char ch : {'a', 'b'}) {
+        s.push_back(ch);                     // change   @@change
+        buildByRef(s, n, out);               // explore  @@recurse
+        s.pop_back();                        // undo     @@revert
+    }
+}
+</script>
+<script type="text/plain" data-lang="java">
+// Java passes object references BY VALUE.
+// String is immutable, so s + ch always creates a new object -> behaves like "by value".
+static void buildByValue(String s, int n, List<String> out) {
+    if (s.length() == n) { out.add(s); return; }
+    for (char ch : new char[]{'a', 'b'})
+        buildByValue(s + ch, n, out);
+}
+
+// StringBuilder is mutable and shared -> behaves like "by reference": undo is required.
+static void buildByRef(StringBuilder sb, int n, List<String> out) {
+    if (sb.length() == n) { out.add(sb.toString()); return; }   // snapshot it!
+    for (char ch : new char[]{'a', 'b'}) {
+        sb.append(ch);                            // change   @@change
+        buildByRef(sb, n, out);                   // explore  @@recurse
+        sb.deleteCharAt(sb.length() - 1);         // undo     @@revert
+    }
+}
+</script>
+<script type="text/plain" data-lang="python">
+# str is immutable -> s + ch creates a new object -> behaves like "by value"
+def build_by_value(s, n, out):
+    if len(s) == n:
+        out.append(s)
+        return
+    for ch in "ab":
+        build_by_value(s + ch, n, out)
+
+# list is mutable and shared -> behaves like "by reference": undo is required
+def build_by_ref(path, n, out):
+    if len(path) == n:
+        out.append("".join(path))      # copy it, never append `path` itself!
+        return
+    for ch in "ab":
+        path.append(ch)                # change   @@change
+        build_by_ref(path, n, out)     # explore  @@recurse
+        path.pop()                     # undo     @@revert
+</script>
+        </div>
+
+        <div class="table-wrap mt-3">
+          <table class="table lang-table">
+            <thead><tr><th>Language</th><th>Behaves like “by value”</th><th>Behaves like “by reference” (needs undo)</th><th>Classic bug</th></tr></thead>
+            <tbody>
+              <tr><td>C++</td><td><code>void f(string s)</code>, <code>vector&lt;int&gt; v</code></td><td><code>void f(string&amp; s)</code>, <code>vector&lt;int&gt;&amp; v</code></td><td>Passing a big vector by value → O(n) copy on every call (TLE).</td></tr>
+              <tr><td>Java</td><td><code>String</code>, <code>int</code> (immutable / primitive)</td><td><code>StringBuilder</code>, arrays, <code>List</code>, <code>boolean[]</code></td><td><code>ans.add(list)</code> instead of <code>ans.add(new ArrayList&lt;&gt;(list))</code>.</td></tr>
+              <tr><td>Python</td><td><code>str</code>, <code>int</code>, <code>tuple</code></td><td><code>list</code>, <code>dict</code>, <code>set</code></td><td><code>res.append(path)</code> instead of <code>res.append(path[:])</code> — every answer ends up empty.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ 5. WHEN ============ -->
+      <section class="section" id="when" data-toc="When to use it">
+        <div class="eyebrow">05 · Recognising the pattern</div>
+        <h2>When should you reach for backtracking?</h2>
+        <div class="checklist mt-2">
+          <div class="ck"><div><h4>Choices + decisions</h4><p>The answer is built step by step, and at every step you pick one option out of several.</p></div></div>
+          <div class="ck"><div><h4>“All possible …” → backtracking. “Max / min / count” → usually DP.</h4><p>Asked to <em>list / print / find all</em> arrangements, subsets, paths? Backtrack. Asked only for an optimum or a count with overlapping sub-problems? Think DP first.</p></div></div>
+          <div class="ck"><div><h4>The number of choices is large — or varies</h4><p>Choices can be “any unused letter”, “any safe colour”, “any unvisited neighbour” — a loop, not a fixed pair of calls.</p></div></div>
+          <div class="ck"><div><h4>Constraints are tiny: n ≤ 10 … 20</h4><p>Small limits are the setter telling you an exponential (2ⁿ, n!, mⁿ) search is intended.</p></div></div>
+          <div class="ck"><div><h4>Don’t be greedy</h4><p>If the locally best choice can be wrong later (e.g. duplicate digits in <em>largest number in K swaps</em>), you must try the alternatives — hit and trial, i.e. backtracking.</p></div></div>
+        </div>
+
+        <div class="card mt-3" id="greedy-demo">
+          <div class="flex wrap gap-2 items-center" style="justify-content:space-between">
+            <h3 class="mb-0">The greedy trap — largest number in K swaps</h3>
+            <div class="flex wrap gap-2">
+              <label class="field">number <input type="text" name="num" value="4577" inputmode="numeric" aria-label="Number"></label>
+              <label class="field">k <input type="number" name="k" value="2" min="1" max="5" aria-label="k"></label>
+            </div>
+          </div>
+          <div class="greedy-demo greedy-out mt-2"></div>
+          <p class="mt-2 mb-0"><a class="arrow-link" href="k-swaps.html">See the full state-space tree →</a></p>
+        </div>
+      </section>
+
+      <!-- ============ 6. TEMPLATE ============ -->
+      <section class="section" id="template" data-toc="The universal template">
+        <div class="eyebrow">06 · Generalisation</div>
+        <h2>The universal backtracking template</h2>
+        <p class="muted prose">Every problem on this track is this code with the six coloured slots filled in. Learn the slots once; each new problem is just “what is my state, my choices, my validity check?”</p>
+        <div class="slot-legend">
+          <span class="slot slot-base"><span class="slot-dot"></span>base case / isSolution</span>
+          <span class="slot slot-choice"><span class="slot-dot"></span>choices</span>
+          <span class="slot slot-valid"><span class="slot-dot"></span>isValid (prune)</span>
+          <span class="slot slot-change"><span class="slot-dot"></span>make change (choose)</span>
+          <span class="slot slot-recurse"><span class="slot-dot"></span>recurse (explore)</span>
+          <span class="slot slot-revert"><span class="slot-dot"></span>revert (un-choose)</span>
+        </div>
+        <div class="code-card">
+<script type="text/plain" data-lang="cpp">
+// state is passed BY REFERENCE; answers collects copies of complete paths
+void solve(State& state, vector<State>& answers) {
+    if (isSolution(state)) {                          @@base
+        answers.push_back(state);    // save a COPY   @@base-
+        return;                                       @@base-
+    }
+    for (const Choice& c : choices(state)) {          @@choices
+        if (!isValid(state, c)) continue;  // prune   @@valid
+        apply(state, c);             // choose        @@change
+        solve(state, answers);       // explore       @@recurse
+        undo(state, c);              // un-choose     @@revert
+    }
+}
+</script>
+<script type="text/plain" data-lang="java">
+void solve(State state, List<State> answers) {
+    if (isSolution(state)) {                          @@base
+        answers.add(state.copy());   // save a COPY   @@base-
+        return;                                       @@base-
+    }
+    for (Choice c : choices(state)) {                 @@choices
+        if (!isValid(state, c)) continue;  // prune   @@valid
+        state.apply(c);              // choose        @@change
+        solve(state, answers);       // explore       @@recurse
+        state.undo(c);               // un-choose     @@revert
+    }
+}
+</script>
+<script type="text/plain" data-lang="python">
+def solve(state, answers):
+    if is_solution(state):                            @@base
+        answers.append(copy(state))  # save a COPY    @@base-
+        return                                        @@base-
+    for c in choices(state):                          @@choices
+        if not is_valid(state, c):   # prune          @@valid
+            continue                                  @@valid-
+        apply(state, c)              # choose         @@change
+        solve(state, answers)        # explore        @@recurse
+        undo(state, c)               # un-choose      @@revert
+</script>
+<script type="text/plain" data-lang="clrs">
+BACKTRACK(state)
+    if IS-SOLUTION(state)
+        RECORD(state)                 // the path of choices is the answer
+        return
+    for each choice c in CHOICES(state)
+        if IS-VALID(state, c)
+            APPLY(state, c)           // choose
+            BACKTRACK(state)          // explore
+            UNDO(state, c)            // un-choose
+</script>
+        </div>
+
+        <h3 class="mt-4">Choose → explore → un-choose</h3>
+        <div class="anatomy mt-2">
+          <div class="st" style="--c:var(--s-base)"><span class="k">1 · base case</span><h4>Is the path complete?</h4><p>Record a copy of the state (or return TRUE if one answer is enough).</p></div>
+          <div class="st" style="--c:var(--s-choice)"><span class="k">2 · choices</span><h4>What can I pick next?</h4><p>Unused letters, positions to swap, unvisited vertices, colours 1..m.</p></div>
+          <div class="st" style="--c:var(--s-valid)"><span class="k">3 · isValid</span><h4>Can this choice still work?</h4><p>Reject early — every rejected choice cuts off a whole subtree.</p></div>
+          <div class="st" style="--c:var(--s-change)"><span class="k">4 · choose</span><h4>Modify shared state</h4><p>push / swap / mark visited / assign colour.</p></div>
+          <div class="st" style="--c:var(--s-recurse)"><span class="k">5 · explore</span><h4>Recurse one level deeper</h4><p>The callee sees our change because the state is shared.</p></div>
+          <div class="st" style="--c:var(--s-revert)"><span class="k">6 · un-choose</span><h4>Undo exactly what you did</h4><p>pop / swap back / unmark / reset colour — the <em>back</em>track.</p></div>
+        </div>
+
+        <h3 class="mt-4">Two flavours</h3>
+        <div class="grid grid-2 mt-2">
+          <div>
+            <p class="muted"><strong>Find all</strong> answers (permutations, all colourings): never stop early, record at every leaf.</p>
+<script type="text/plain" data-clrs>
+BACKTRACK-ALL(state)
+    if IS-SOLUTION(state)
+        RECORD(state)
+        return
+    for each choice c in CHOICES(state)
+        if IS-VALID(state, c)
+            APPLY(state, c)
+            BACKTRACK-ALL(state)
+            UNDO(state, c)
+</script>
+          </div>
+          <div>
+            <p class="muted"><strong>Find one</strong> answer (a Hamiltonian cycle, one valid colouring): return TRUE as soon as a leaf succeeds.</p>
+<script type="text/plain" data-clrs>
+BACKTRACK-ONE(state)
+    if IS-SOLUTION(state)
+        return TRUE
+    for each choice c in CHOICES(state)
+        if IS-VALID(state, c)
+            APPLY(state, c)
+            if BACKTRACK-ONE(state)
+                return TRUE           // stop at the first answer
+            UNDO(state, c)
+    return FALSE
+</script>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 7. PATTERN MAP ============ -->
+      <section class="section" id="pattern-map" data-toc="Pattern map">
+        <div class="eyebrow">07 · Map every question</div>
+        <h2>Pattern map: every problem, same six slots</h2>
+        <div class="table-wrap mt-2">
+          <table class="table" style="min-width:980px">
+            <thead><tr>
+              <th>Problem</th><th class="slot-change">Shared state</th><th class="slot-choice">Choices</th><th class="slot-valid">isValid</th><th class="slot-change">Change / <span class="slot-revert">revert</span></th><th class="slot-base">Base case</th><th>Answer</th>
+            </tr></thead>
+            <tbody>
+              <tr><td><a href="permutations.html"><b>Permutations</b></a></td><td><code>s</code>, <code>idx</code></td><td>swap <code>s[idx]</code> with <code>s[i]</code>, i ≥ idx</td><td><code>s[i]</code> not already tried at this level</td><td>swap / swap back</td><td><code>idx == n</code></td><td>path = arrangement</td></tr>
+              <tr><td><a href="k-swaps.html"><b>Largest number, K swaps</b></a></td><td><code>s</code>, <code>k</code>, <code>best</code></td><td>swap <code>s[idx]</code> with any later max digit</td><td><code>s[j] == max(s[idx..])</code> &gt; <code>s[idx]</code></td><td>swap, k−1 / swap back</td><td><code>k == 0</code> or <code>idx == n</code></td><td>best over all paths</td></tr>
+              <tr><td><a href="hamiltonian-cycle.html"><b>Hamiltonian cycle</b></a></td><td><code>path[]</code>, <code>visited[]</code></td><td>next vertex <code>v</code></td><td>edge (u, v) and <code>!visited[v]</code></td><td>push, mark / pop, unmark</td><td><code>|path| == n</code> and edge back to start</td><td>path = cycle</td></tr>
+              <tr><td><a href="graph-coloring.html"><b>Graph colouring</b></a></td><td><code>color[]</code></td><td>colour <code>c ∈ 1..m</code> for vertex <code>v</code></td><td>no neighbour has colour <code>c</code></td><td><code>color[v]=c</code> / <code>=0</code></td><td><code>v == n</code></td><td>colours on the path</td></tr>
+              <tr><td>N-digit increasing numbers</td><td>number so far</td><td>next digit <code>d</code></td><td><code>d &gt; last digit</code></td><td>append / pop</td><td>length == n</td><td>path = number</td></tr>
+              <tr><td>Rat in a maze</td><td>cell, <code>visited</code> grid, moves</td><td>D, L, R, U</td><td>inside, open, not visited</td><td>mark + push / unmark + pop</td><td>reached (n−1, n−1)</td><td>path = moves</td></tr>
+              <tr><td>Word break (all sentences)</td><td>index <code>i</code>, words</td><td>prefix <code>s[i..j]</code></td><td>prefix is in dictionary</td><td>push word / pop</td><td><code>i == n</code></td><td>path = sentence</td></tr>
+              <tr><td>Palindrome partitioning</td><td>index <code>i</code>, parts</td><td>cut <code>s[i..j]</code></td><td><code>s[i..j]</code> is a palindrome</td><td>push / pop</td><td><code>i == n</code></td><td>path = partition</td></tr>
+              <tr><td>Combination sum</td><td>start, remaining, combo</td><td>candidate <code>j ≥ start</code></td><td><code>cand[j] ≤ remaining</code></td><td>push / pop</td><td>remaining == 0</td><td>path = combination</td></tr>
+              <tr><td>Sudoku</td><td>board</td><td>digit 1..9 for next empty cell</td><td>row, column, box free</td><td>place / erase</td><td>no empty cell</td><td>filled board</td></tr>
+              <tr><td>N-Queens</td><td>row, cols, diagonals</td><td>column <code>c</code> in this row</td><td>column + both diagonals free</td><td>place / remove</td><td>row == n</td><td>path = placement</td></tr>
+              <tr><td>Phone letter combinations</td><td>index, string</td><td>letters of <code>digit[i]</code></td><td>always valid</td><td>append / pop</td><td>index == len</td><td>path = word</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ 8. PROBLEMS ============ -->
+      <section class="section" id="problems" data-toc="Worked problems">
+        <div class="eyebrow">08 · Worked problems</div>
+        <h2>Four problems, fully animated</h2>
+        <div class="grid grid-2 mt-2">
+          <a class="card card-link pcard" href="permutations.html">
+            <div class="card-kicker"><span class="num">01</span> strings · pass by value vs reference</div>
+            <h3>All Possible Permutations</h3>
+            <p class="muted">Input/output copies (answer at the leaf) vs swapping in place (answer in the path) — plus de-duplication for inputs like “aab”.</p>
+            <div class="pattern-line">choices: unused letters · isValid: not tried at this level · undo: swap back</div>
+            <div class="meta"><span class="chip medium">Medium</span><span class="chip">GFG</span><span class="chip">LeetCode 46 · 47</span><span class="chip">CSES 1622</span></div>
+          </a>
+          <a class="card card-link pcard" href="k-swaps.html">
+            <div class="card-kicker"><span class="num">02</span> digits · don't be greedy</div>
+            <h3>Largest Number in K Swaps</h3>
+            <p class="muted">Greedy is right when digits are distinct and wrong when they repeat. Backtracking tries every position of the max digit.</p>
+            <div class="pattern-line">choices: (i, j) swaps · isValid: s[j] is the max &gt; s[i] · undo: swap back</div>
+            <div class="meta"><span class="chip medium">Medium</span><span class="chip">GFG</span><span class="chip">LeetCode 670</span><span class="chip">CF 915C</span></div>
+          </a>
+          <a class="card card-link pcard" href="hamiltonian-cycle.html">
+            <div class="card-kicker"><span class="num">03</span> graphs · visited[]</div>
+            <h3>Hamiltonian Cycle</h3>
+            <p class="muted">Visit every vertex exactly once and return to the start. Why we can always start at vertex 0, and why articulation points kill cycles.</p>
+            <div class="pattern-line">choices: next vertex · isValid: adjacent &amp; unvisited · undo: pop + unmark</div>
+            <div class="meta"><span class="chip hard">Hard</span><span class="chip">GFG</span><span class="chip">CSES 1690</span><span class="chip">AtCoder ABC054 C</span></div>
+          </a>
+          <a class="card card-link pcard" href="graph-coloring.html">
+            <div class="card-kicker"><span class="num">04</span> graphs · isSafe()</div>
+            <h3>Graph Colouring (m-colouring)</h3>
+            <p class="muted">Colour every vertex with at most m colours so no edge joins two equal colours. The choice is the colour, not the vertex.</p>
+            <div class="pattern-line">choices: colour 1..m · isValid: no neighbour shares it · undo: colour ← 0</div>
+            <div class="meta"><span class="chip medium">Medium</span><span class="chip">GFG</span><span class="chip">LeetCode 785 · 1042</span><span class="chip">AtCoder ABC199 D</span></div>
+          </a>
+        </div>
+      </section>
+
+      <!-- ============ 9. NEXT ============ -->
+      <section class="section" id="next" data-toc="Coming next">
+        <div class="eyebrow">09 · Coming next on this track</div>
+        <h2>Same template, next problems</h2>
+        <p class="muted">These are mapped in the pattern table above and will get their own animated pages. You can already try them:</p>
+        <div class="table-wrap mt-2">
+          <table class="table">
+            <thead><tr><th>#</th><th>Problem</th><th>Practice</th></tr></thead>
+            <tbody>
+              <tr><td>5</td><td>N-digit numbers with digits in increasing order</td><td><a href="https://www.geeksforgeeks.org/problems/n-digit-numbers-with-digits-in-increasing-order5903/1" target="_blank" rel="noopener">GFG</a></td></tr>
+              <tr><td>6</td><td>Rat in a maze</td><td><a href="https://www.geeksforgeeks.org/problems/rat-in-a-maze-problem/1" target="_blank" rel="noopener">GFG</a> · <a href="https://leetcode.com/problems/unique-paths-iii/" target="_blank" rel="noopener">LeetCode 980</a></td></tr>
+              <tr><td>7</td><td>Word break (all sentences)</td><td><a href="https://leetcode.com/problems/word-break-ii/" target="_blank" rel="noopener">LeetCode 140</a></td></tr>
+              <tr><td>8</td><td>Palindrome partitioning</td><td><a href="https://leetcode.com/problems/palindrome-partitioning/" target="_blank" rel="noopener">LeetCode 131</a></td></tr>
+              <tr><td>9</td><td>Combination sum</td><td><a href="https://leetcode.com/problems/combination-sum/" target="_blank" rel="noopener">LeetCode 39</a> · <a href="https://leetcode.com/problems/combination-sum-ii/" target="_blank" rel="noopener">40</a></td></tr>
+              <tr><td>10</td><td>Sudoku solver</td><td><a href="https://leetcode.com/problems/sudoku-solver/" target="_blank" rel="noopener">LeetCode 37</a></td></tr>
+              <tr><td>11</td><td>N-Queens</td><td><a href="https://leetcode.com/problems/n-queens/" target="_blank" rel="noopener">LeetCode 51</a> · <a href="https://cses.fi/problemset/task/1624" target="_blank" rel="noopener">CSES 1624</a></td></tr>
+              <tr><td>12</td><td>Phone letter combinations</td><td><a href="https://leetcode.com/problems/letter-combinations-of-a-phone-number/" target="_blank" rel="noopener">LeetCode 17</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ 10. EXERCISES ============ -->
+      <section class="section" id="exercises" data-toc="Exercises">
+        <div class="eyebrow">10 · Check yourself</div>
+        <h2>Exercises</h2>
+        <details class="ex"><summary><span class="qn">E1</span><span class="q">How many nodes does the state-space tree of the permutations of “abcd” have (ignoring rejected choices)? How many leaves?</span></summary>
+          <div class="ans"><p>Level sizes are 1, 4, 4·3 = 12, 4·3·2 = 24, 24 → <strong>65 nodes</strong>, of which <strong>24 are leaves</strong> (4!). In general the tree has Σ n!/(n−k)! nodes for k = 0..n, which is about e·n!.</p></div></details>
+        <details class="ex"><summary><span class="qn">E2</span><span class="q">Why does the pass-by-value version never need an undo step? What does it pay instead?</span></summary>
+          <div class="ans"><p>Every call receives its own copy, so nothing the callee does is visible to the caller — returning discards the copy. The price is <strong>copying</strong>: O(length) time and memory at every call, versus O(1) for push/pop on a shared object.</p></div></details>
+        <details class="ex"><summary><span class="qn">E3</span><span class="q">In Python you write <code>res.append(path)</code> at the base case. All answers come out as <code>[]</code>. Why?</span></summary>
+          <div class="ans"><p>You stored a reference to the <em>same</em> list object each time. Backtracking later pops everything, so every stored reference now points at an empty list. Store a snapshot: <code>res.append(path[:])</code> or <code>list(path)</code>. In Java: <code>new ArrayList&lt;&gt;(path)</code>.</p></div></details>
+        <details class="ex"><summary><span class="qn">E4</span><span class="q">A problem asks for the <em>minimum</em> number of coins to make a sum ≤ 10⁴. Backtracking or DP?</span></summary>
+          <div class="ans"><p><strong>DP.</strong> It asks for an optimum (not all combinations), sub-problems (“min coins for amount x”) repeat many times, and the constraint is far too large for an exponential search. The answer lives at the root: <code>dp[sum]</code>.</p></div></details>
+        <details class="ex"><summary><span class="qn">E5</span><span class="q">In the controlled maze (only S and W), why don’t we need a <code>visited[]</code> array?</span></summary>
+          <div class="ans"><p>Each move strictly increases the row or strictly decreases the column, so the walk can never return to a cell it has already been on — cycles are impossible. Controlled choices removed both wasted calls <em>and</em> the need for extra state.</p></div></details>
+        <details class="ex"><summary><span class="qn">E6</span><span class="q">Turn the “find all” template into “find one” so that Hamiltonian cycle stops at the first cycle. Which lines change?</span></summary>
+          <div class="ans"><p>The procedure returns a boolean: the base case returns TRUE instead of recording, the recursive call becomes <code>if BACKTRACK(state) return TRUE</code>, and after the loop we <code>return FALSE</code>. See <em>BACKTRACK-ONE</em> above.</p></div></details>
+        <details class="ex"><summary><span class="qn">E7</span><span class="q">Fill the six slots for “print all subsets of an array without duplicates in the output, when the array has repeated values”.</span></summary>
+          <div class="ans"><p>Sort first. <strong>State:</strong> start index, current subset. <strong>Base:</strong> record the subset at <em>every</em> node. <strong>Choices:</strong> j from start to n−1. <strong>isValid:</strong> skip j if j &gt; start and a[j] == a[j−1]. <strong>Change:</strong> push a[j]. <strong>Recurse:</strong> start = j + 1. <strong>Revert:</strong> pop. (LeetCode 90.)</p></div></details>
+        <details class="ex"><summary><span class="qn">E8</span><span class="q">Constraints say n ≤ 10. Estimate how many operations n! and 2ⁿ·n are. Would either pass in one second?</span></summary>
+          <div class="ans"><p>10! = 3,628,800 and 2¹⁰·10 ≈ 10⁴. Both pass comfortably (≈10⁸ simple operations per second). At n = 13, 13! ≈ 6·10⁹ — too slow without pruning.</p></div></details>
+      </section>
+
+      <!-- ============ 11. PRACTICE ============ -->
+      <section class="section" id="practice" data-toc="Practice set">
+        <div class="eyebrow">11 · Practice set</div>
+        <h2>General backtracking practice</h2>
+        <div class="table-wrap mt-2">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>Slot to think about</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat"><span class="dot dot-lc" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>LeetCode</span></td><td><a href="https://leetcode.com/problems/subsets/" target="_blank" rel="noopener">78. Subsets</a></td><td><span class="chip medium">Medium</span></td><td>record at every node</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-lc" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>LeetCode</span></td><td><a href="https://leetcode.com/problems/subsets-ii/" target="_blank" rel="noopener">90. Subsets II</a></td><td><span class="chip medium">Medium</span></td><td>isValid skips duplicates</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-lc" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>LeetCode</span></td><td><a href="https://leetcode.com/problems/combinations/" target="_blank" rel="noopener">77. Combinations</a></td><td><span class="chip medium">Medium</span></td><td>choices start at <code>start</code></td></tr>
+              <tr><td><span class="plat"><span class="dot dot-lc" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>LeetCode</span></td><td><a href="https://leetcode.com/problems/generate-parentheses/" target="_blank" rel="noopener">22. Generate Parentheses</a></td><td><span class="chip medium">Medium</span></td><td>isValid: open ≤ n, close ≤ open</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-lc" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>LeetCode</span></td><td><a href="https://leetcode.com/problems/word-search/" target="_blank" rel="noopener">79. Word Search</a></td><td><span class="chip medium">Medium</span></td><td>mark / unmark the grid cell</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-lc" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>LeetCode</span></td><td><a href="https://leetcode.com/problems/restore-ip-addresses/" target="_blank" rel="noopener">93. Restore IP Addresses</a></td><td><span class="chip medium">Medium</span></td><td>isValid: 0–255, no leading zero</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-lc" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>LeetCode</span></td><td><a href="https://leetcode.com/problems/partition-to-k-equal-sum-subsets/" target="_blank" rel="noopener">698. Partition to K Equal Sum Subsets</a></td><td><span class="chip medium">Medium</span></td><td>strong pruning (sort desc)</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-cses" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>CSES</span></td><td><a href="https://cses.fi/problemset/task/1623" target="_blank" rel="noopener">Apple Division</a></td><td><span class="chip easy">Easy</span></td><td>2ⁿ include / exclude</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-cses" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>CSES</span></td><td><a href="https://cses.fi/problemset/task/1624" target="_blank" rel="noopener">Chessboard and Queens</a></td><td><span class="chip medium">Medium</span></td><td>N-Queens with blocked cells</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-cses" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>CSES</span></td><td><a href="https://cses.fi/problemset/task/1625" target="_blank" rel="noopener">Grid Paths</a></td><td><span class="chip hard">Hard</span></td><td>pruning is everything</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-cf" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>Codeforces</span></td><td><a href="https://codeforces.com/problemset/problem/550/B" target="_blank" rel="noopener">550B · Preparing Olympiad</a></td><td><span class="chip easy">1400</span></td><td>enumerate all subsets</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-cf" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>Codeforces</span></td><td><a href="https://codeforces.com/problemset/problem/431/B" target="_blank" rel="noopener">431B · Shower Line</a></td><td><span class="chip easy">1200</span></td><td>try all 5! orders</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-at" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>AtCoder</span></td><td><a href="https://atcoder.jp/contests/abc054/tasks/abc054_c" target="_blank" rel="noopener">ABC054 C · One-stroke Path</a></td><td><span class="chip medium">Medium</span></td><td>Hamiltonian paths from vertex 1</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-at" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>AtCoder</span></td><td><a href="https://atcoder.jp/contests/abc199/tasks/abc199_d" target="_blank" rel="noopener">ABC199 D · RGB Coloring 2</a></td><td><span class="chip hard">Hard</span></td><td>count 3-colourings</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-cc" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>CodeChef</span></td><td><a href="https://www.codechef.com/practice-old/tags/backtracking" target="_blank" rel="noopener">Backtracking tag — practice list</a></td><td><span class="chip">mixed</span></td><td>filter by difficulty</td></tr>
+              <tr><td><span class="plat"><span class="dot dot-gfg" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>GFG</span></td><td><a href="https://www.geeksforgeeks.org/dsa/backtracking-algorithms/" target="_blank" rel="noopener">Backtracking algorithms — article series</a></td><td><span class="chip">reading</span></td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="../index.html"><small>← Back</small>Home</a>
+          <a class="next" href="permutations.html"><small>Next problem →</small>01 · All Permutations</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+  <script src="../assets/js/tracer.js"></script>
+  <script src="../assets/js/tree3d.js"></script>
+  <script src="../assets/js/pages/concept.js"></script>
+</body>
+</html>
