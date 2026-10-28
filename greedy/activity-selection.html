@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Activity Selection — Greedy · RecursionVerse</title>
+  <meta name="description" content="Activity selection by greedy: sort by finish time and pick every compatible activity. Timelines, worked examples, code in C++/Java/Python, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="greedy"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Greedy</a><span>/</span><span>Activity Selection</span></div>
+      <div class="eyebrow">Problem 02 · earliest finish first</div>
+      <h1>Activity Selection</h1>
+      <div class="chips mt-1"><span class="chip easy">Easy</span><span class="chip pink">greedy</span><span class="chip">O(n log n)</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/activity-selection-1587115620/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Activity Selection</a>
+        <a class="plink" href="https://cses.fi/problemset/task/1629" target="_blank" rel="noopener"><span class="dot dot-cses"></span>CSES 1629 · Movie Festival</a>
+        <a class="plink" href="https://leetcode.com/problems/non-overlapping-intervals/" target="_blank" rel="noopener"><span class="dot dot-lc"></span>LeetCode 435</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <p class="problem-statement prose">We have <strong>n</strong> proposed activities that all need the same resource (one room, one stage), so <strong>only one activity can run at a time</strong>. Activity i has start time <code>s[i]</code> and finish time <code>f[i]</code> and occupies <code>[s[i], f[i])</code>. Two activities are <em>compatible</em> if they do not overlap (<code>s[j] ≥ f[i]</code>). <strong>Select the maximum number of compatible activities.</strong></p>
+        <div class="example mt-2"><span class="k">i  </span> 1  2  3  4  5  6  7  8  9  10 11
+<span class="k">s  </span> 1  3  0  5  3  5  6  8  8  2  12
+<span class="k">f  </span> 4  5  6  7  9  9  10 11 12 14 16
+<span class="k">out  </span><span class="o">4 activities → A1, A4, A8, A11</span></div>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p>Which activity should go first? The one that <strong>frees the room the earliest</strong>. Finishing early leaves the most time for everything else, so it can never hurt.</p>
+          <p>The tempting alternatives are wrong. The notes show it on the example above:</p>
+        </div>
+        <div class="grid grid-2 mt-2">
+          <div class="card card-flat">
+            <h4 class="bad">Earliest start first</h4>
+            <p class="muted mb-0">Picks A3 [0, 6) first — a long activity that blocks A1, A2, A4. Then A9 and A11. Only <b class="bad">3</b> activities.</p>
+          </div>
+          <div class="card card-flat">
+            <h4 class="bad">Shortest duration first</h4>
+            <p class="muted mb-0">Counter-example: [1, 5), [4, 7), [6, 10). The shortest, [4, 7), overlaps both others → <b class="bad">1</b> activity, but [1, 5) + [6, 10) gives 2.</p>
+          </div>
+        </div>
+        <div class="callout info mt-2"><span class="ic">i</span><p><strong>Why earliest finish is optimal (exchange argument):</strong> let a be the activity with the earliest finish. Take any optimal schedule and replace its first activity with a. Since a finishes no later, it still does not overlap the rest — the schedule stays valid and has the same size. So some optimal answer starts with a; repeat on what remains.</p></div>
+      </section>
+
+      <section class="section" id="technique" data-toc="Technique">
+        <h2>Solution technique</h2>
+        <div class="dry">
+          <div class="d"><span>Sort the activities in <strong>ascending order of finish time</strong>.</span></div>
+          <div class="d"><span>Select the first activity; remember its finish time as <code>last</code>.</span></div>
+          <div class="d"><span>For each next activity: if its <strong>start ≥ last</strong>, select it and set <code>last</code> to its finish time. Otherwise skip it.</span></div>
+        </div>
+<script type="text/plain" data-clrs>
+GREEDY-ACTIVITY-SELECTOR(s, f)   // f already sorted ascending
+    n = s.length
+    A = {a1}
+    k = 1
+    for m = 2 to n
+        if s[m] ≥ f[k]
+            A = A ∪ {am}
+            k = m   // am is now the last selected
+    return A
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+vector<int> activitySelection(vector<int>& s, vector<int>& f) {
+    int n = s.size();
+    vector<int> idx(n);
+    for (int i = 0; i < n; i++) idx[i] = i;
+    sort(idx.begin(), idx.end(), [&](int a, int b) { return f[a] < f[b]; });
+    vector<int> chosen;
+    int last = INT_MIN;
+    for (int i : idx)
+        if (s[i] >= last) {          // compatible with the last chosen one
+            chosen.push_back(i + 1);  // 1-based activity number
+            last = f[i];
+        }
+    return chosen;
+}
+</script>
+<script type="text/plain" data-lang="java">
+static List<Integer> activitySelection(int[] s, int[] f) {
+    int n = s.length;
+    Integer[] idx = new Integer[n];
+    for (int i = 0; i < n; i++) idx[i] = i;
+    Arrays.sort(idx, (a, b) -> Integer.compare(f[a], f[b]));
+    List<Integer> chosen = new ArrayList<>();
+    int last = Integer.MIN_VALUE;
+    for (int i : idx)
+        if (s[i] >= last) {
+            chosen.add(i + 1);
+            last = f[i];
+        }
+    return chosen;
+}
+</script>
+<script type="text/plain" data-lang="python">
+def activity_selection(s, f):
+    order = sorted(range(len(s)), key=lambda i: f[i])
+    chosen, last = [], float("-inf")
+    for i in order:
+        if s[i] >= last:
+            chosen.append(i + 1)
+            last = f[i]
+    return chosen
+
+print(activity_selection([1, 3, 0, 5, 3, 5, 6, 8, 8, 2, 12],
+                         [4, 5, 6, 7, 9, 9, 10, 11, 12, 14, 16]))  # [1, 4, 8, 11]
+</script>
+        </div>
+        <div class="callout warn mt-2"><span class="ic">!</span><p>Some judges (GFG) treat touching activities as overlapping and require <code>s[i] &gt; last</code> (strict). Read the statement: is the end time inclusive?</p></div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example 1</h2>
+        <p class="muted">The 11 activities are already sorted by finish time. Green bars are selected.</p>
+        <div class="timeline" style="--max:16">
+          <div class="tl-row pick"><span>A1</span><span class="tl-track"><span class="tl-bar" style="--s:1;--f:4">1–4</span></span></div>
+          <div class="tl-row"><span>A2</span><span class="tl-track"><span class="tl-bar" style="--s:3;--f:5">3–5</span></span></div>
+          <div class="tl-row"><span>A3</span><span class="tl-track"><span class="tl-bar" style="--s:0;--f:6">0–6</span></span></div>
+          <div class="tl-row pick"><span>A4</span><span class="tl-track"><span class="tl-bar" style="--s:5;--f:7">5–7</span></span></div>
+          <div class="tl-row"><span>A5</span><span class="tl-track"><span class="tl-bar" style="--s:3;--f:9">3–9</span></span></div>
+          <div class="tl-row"><span>A6</span><span class="tl-track"><span class="tl-bar" style="--s:5;--f:9">5–9</span></span></div>
+          <div class="tl-row"><span>A7</span><span class="tl-track"><span class="tl-bar" style="--s:6;--f:10">6–10</span></span></div>
+          <div class="tl-row pick"><span>A8</span><span class="tl-track"><span class="tl-bar" style="--s:8;--f:11">8–11</span></span></div>
+          <div class="tl-row"><span>A9</span><span class="tl-track"><span class="tl-bar" style="--s:8;--f:12">8–12</span></span></div>
+          <div class="tl-row"><span>A10</span><span class="tl-track"><span class="tl-bar" style="--s:2;--f:14">2–14</span></span></div>
+          <div class="tl-row pick"><span>A11</span><span class="tl-track"><span class="tl-bar" style="--s:12;--f:16">12–16</span></span></div>
+        </div>
+        <div class="table-wrap mt-2">
+          <table class="table">
+            <thead><tr><th>Activity</th><th>s</th><th>f</th><th>s ≥ last?</th><th>Decision</th><th>last</th></tr></thead>
+            <tbody>
+              <tr><td>A1</td><td>1</td><td>4</td><td>first</td><td class="hl">select</td><td>4</td></tr>
+              <tr><td>A2</td><td>3</td><td>5</td><td>3 ≥ 4 ✗</td><td class="x">skip</td><td>4</td></tr>
+              <tr><td>A3</td><td>0</td><td>6</td><td>0 ≥ 4 ✗</td><td class="x">skip</td><td>4</td></tr>
+              <tr><td>A4</td><td>5</td><td>7</td><td>5 ≥ 4 ✓</td><td class="hl">select</td><td>7</td></tr>
+              <tr><td>A5</td><td>3</td><td>9</td><td>3 ≥ 7 ✗</td><td class="x">skip</td><td>7</td></tr>
+              <tr><td>A6</td><td>5</td><td>9</td><td>5 ≥ 7 ✗</td><td class="x">skip</td><td>7</td></tr>
+              <tr><td>A7</td><td>6</td><td>10</td><td>6 ≥ 7 ✗</td><td class="x">skip</td><td>7</td></tr>
+              <tr><td>A8</td><td>8</td><td>11</td><td>8 ≥ 7 ✓</td><td class="hl">select</td><td>11</td></tr>
+              <tr><td>A9</td><td>8</td><td>12</td><td>8 ≥ 11 ✗</td><td class="x">skip</td><td>11</td></tr>
+              <tr><td>A10</td><td>2</td><td>14</td><td>2 ≥ 11 ✗</td><td class="x">skip</td><td>11</td></tr>
+              <tr><td>A11</td><td>12</td><td>16</td><td>12 ≥ 11 ✓</td><td class="hl">select</td><td>16</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2"><strong>Answer: 4 activities — A1, A4, A8, A11.</strong> (A2, A4, A9, A11 is another valid set of 4; the maximum is not always unique.)</p>
+
+        <h3 class="mt-3">Worked example 2</h3>
+        <div class="example"><span class="k">A  </span> 1  2  3  4  5  6  7  8  9  10
+<span class="k">s  </span> 1  2  3  4  7  8  9  9  11 12
+<span class="k">f  </span> 3  5  4  7  10 9  11 13 12 14</div>
+        <p class="muted mt-2">Sorted by finish: A1(1–3), A3(3–4), A2(2–5), A4(4–7), A6(8–9), A5(7–10), A7(9–11), A9(11–12), A8(9–13), A10(12–14).</p>
+        <div class="timeline mt-2" style="--max:14">
+          <div class="tl-row pick"><span>A1</span><span class="tl-track"><span class="tl-bar" style="--s:1;--f:3">1–3</span></span></div>
+          <div class="tl-row pick"><span>A3</span><span class="tl-track"><span class="tl-bar" style="--s:3;--f:4">3–4</span></span></div>
+          <div class="tl-row"><span>A2</span><span class="tl-track"><span class="tl-bar" style="--s:2;--f:5">2–5</span></span></div>
+          <div class="tl-row pick"><span>A4</span><span class="tl-track"><span class="tl-bar" style="--s:4;--f:7">4–7</span></span></div>
+          <div class="tl-row pick"><span>A6</span><span class="tl-track"><span class="tl-bar" style="--s:8;--f:9">8–9</span></span></div>
+          <div class="tl-row"><span>A5</span><span class="tl-track"><span class="tl-bar" style="--s:7;--f:10">7–10</span></span></div>
+          <div class="tl-row pick"><span>A7</span><span class="tl-track"><span class="tl-bar" style="--s:9;--f:11">9–11</span></span></div>
+          <div class="tl-row pick"><span>A9</span><span class="tl-track"><span class="tl-bar" style="--s:11;--f:12">11–12</span></span></div>
+          <div class="tl-row"><span>A8</span><span class="tl-track"><span class="tl-bar" style="--s:9;--f:13">9–13</span></span></div>
+          <div class="tl-row pick"><span>A10</span><span class="tl-track"><span class="tl-bar" style="--s:12;--f:14">12–14</span></span></div>
+        </div>
+        <p class="muted mt-2"><strong>Answer: 7 activities — A1, A3, A4, A6, A7, A9, A10.</strong></p>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">s = [1, 3, 0, 5, 8, 5], f = [2, 4, 6, 7, 9, 9]. Find the maximum set.</span></summary>
+          <div class="ans"><p>Sorted by f: (1,2), (3,4), (0,6), (5,7), (8,9), (5,9). Select (1,2) → (3,4) → (5,7) → (8,9). <strong>4 activities: 1, 2, 4, 5.</strong></p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">s = [10, 12, 20], f = [20, 25, 30]. How many activities, if touching (end = start) counts as overlapping?</span></summary>
+          <div class="ans"><p>Select [10, 20]. [12, 25] overlaps. [20, 30] starts exactly at 20 — with the strict rule that is an overlap. <strong>1 activity.</strong> With the non-strict rule it would be 2.</p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">Minimum number of intervals to remove so the rest do not overlap (LeetCode 435)?</span></summary>
+          <div class="ans"><p>It is <code>n − (maximum compatible set)</code>. Run activity selection and subtract.</p></div></details>
+        <details class="ex"><summary><span class="qn">P4</span><span class="q">Would "latest start time first" also be optimal?</span></summary>
+          <div class="ans"><p>Yes — it is the mirror image of earliest finish (run time backwards). Pick the activity that starts last, then the one that finishes before it and starts latest, and so on.</p></div></details>
+        <details class="ex"><summary><span class="qn">P5</span><span class="q">What if each activity has a weight and we want the maximum total weight?</span></summary>
+          <div class="ans"><p>Greedy no longer works (one heavy activity may beat two light ones). This is <em>weighted interval scheduling</em>: sort by finish, then DP with binary search, O(n log n). See LeetCode 1235.</p></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Only counts activities.</strong> If activities have different values (weights / profits), earliest-finish is wrong — use DP (weighted interval scheduling).</p></div>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Only one resource.</strong> With k rooms, or "minimum rooms to host everything", you need a different greedy (sort by start + min-heap of end times).</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>The key must be the finish time.</strong> Sorting by start time or by duration looks reasonable but is wrong.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Boundary rule.</strong> Decide whether <code>s == last</code> is allowed; it changes the answer.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Step</th><th>Work</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td>Sort by finish time</td><td>comparison sort of n activities</td><td>O(n log n)</td></tr>
+              <tr><td>Scan</td><td>each activity checked once: one comparison, maybe one assignment</td><td>Θ(n)</td></tr>
+              <tr><td><b>Total</b></td><td>O(n log n) + Θ(n)</td><td><b>O(n log n)</b></td></tr>
+              <tr><td>Already sorted input</td><td>only the scan (CLRS GREEDY-ACTIVITY-SELECTOR)</td><td><b>Θ(n)</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Time</span><span class="v">O(n log n)</span><span class="faint" style="font-size:.86rem">Θ(n) if pre-sorted</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(n)</span><span class="faint" style="font-size:.86rem">index array + output; O(1) extra if sorted in place</span></div>
+          <div class="kbox"><span class="k">Compare</span><span class="v">DP: O(n³)</span><span class="faint" style="font-size:.86rem">the CLRS DP over sub-intervals S(i, j) — greedy avoids it</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/activity-selection-1587115620/1" target="_blank" rel="noopener">Activity Selection</a></td><td><span class="chip easy">Easy</span></td><td>this page (strict)</td></tr>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/n-meetings-in-one-room-1587115620/1" target="_blank" rel="noopener">N meetings in one room</a></td><td><span class="chip easy">Easy</span></td><td>same idea</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1629" target="_blank" rel="noopener">1629 · Movie Festival</a></td><td><span class="chip easy">Easy</span></td><td>same idea</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/non-overlapping-intervals/" target="_blank" rel="noopener">435. Non-overlapping Intervals</a></td><td><span class="chip medium">Medium</span></td><td>n − max selected</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons/" target="_blank" rel="noopener">452. Minimum Arrows to Burst Balloons</a></td><td><span class="chip medium">Medium</span></td><td>sort by end, shoot at end</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/maximum-length-of-pair-chain/" target="_blank" rel="noopener">646. Maximum Length of Pair Chain</a></td><td><span class="chip medium">Medium</span></td><td>same idea</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/maximum-profit-in-job-scheduling/" target="_blank" rel="noopener">1235. Maximum Profit in Job Scheduling</a></td><td><span class="chip hard">Hard</span></td><td>weighted → DP</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="fractional-knapsack.html"><small>← Previous</small>01 · Fractional Knapsack</a>
+          <a class="next" href="job-sequencing.html"><small>Next problem →</small>03 · Job Sequencing</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

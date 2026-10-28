@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Job Sequencing with Deadlines — Greedy · RecursionVerse</title>
+  <meta name="description" content="Job sequencing with deadlines by greedy: sort by profit or penalty, place each job in the latest free slot before its deadline. Worked examples, code, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="greedy"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Greedy</a><span>/</span><span>Job Sequencing</span></div>
+      <div class="eyebrow">Problem 03 · highest profit, latest free slot</div>
+      <h1>Job Sequencing with Deadlines</h1>
+      <div class="chips mt-1"><span class="chip medium">Medium</span><span class="chip pink">greedy</span><span class="chip">O(n²) · O(n log n) with DSU</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/job-sequencing-problem-1587115620/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Job Sequencing Problem</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <p class="problem-statement prose">Schedule jobs on a <strong>single processor</strong>. Every job takes exactly <strong>one unit of time</strong> and has a <strong>deadline</strong> <code>d[i]</code> and a <strong>profit</strong> (or penalty) <code>p[i]</code>. A job earns its profit only if it finishes by its deadline (equivalently: a job that misses its deadline pays its penalty). Choose which jobs to run and in which time slots so that the <strong>total profit is maximum</strong> — or the <strong>total penalty is minimum</strong>.</p>
+        <div class="example mt-2"><span class="k">Job      </span> J1 J2 J3 J4 J5 J6 J7
+<span class="k">Deadline </span> 4  2  4  3  1  4  6
+<span class="k">Penalty  </span> 70 60 50 40 30 20 10
+<span class="k">out  </span><span class="o">order J4 → J2 → J3 → J1 → J7, minimum penalty = 30 + 20 = 50</span></div>
+        <p class="muted mt-2">Maximising the profit of the jobs that are done and minimising the penalty of the jobs that are missed are the same problem: <em>total − done = missed</em>.</p>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p><strong>Which job first?</strong> The most valuable one — losing it costs the most. So consider jobs in <strong>decreasing order of profit / penalty</strong>.</p>
+          <p><strong>Where to put it?</strong> In the <strong>latest free slot on or before its deadline</strong>. Putting it as late as possible keeps the earlier slots free for jobs with tighter deadlines. If every slot up to the deadline is taken, the job cannot be done — discard it.</p>
+        </div>
+        <div class="callout info mt-2"><span class="ic">i</span><p>Time slots are unit intervals: slot t is the interval (t − 1, t]. A job with deadline d can use any slot 1 … d.</p></div>
+      </section>
+
+      <section class="section" id="technique" data-toc="Technique">
+        <h2>Solution technique</h2>
+        <div class="dry">
+          <div class="d"><span>Sort all jobs in <strong>descending order of profit / penalty</strong>.</span></div>
+          <div class="d"><span>Create slots 1 … D (D = maximum deadline, or n if smaller), all empty.</span></div>
+          <div class="d"><span>For each job: scan from slot <code>min(d, D)</code> down to 1 and put the job in the first empty slot.</span></div>
+          <div class="d"><span>If no slot is free, discard the job (it misses its deadline).</span></div>
+        </div>
+<script type="text/plain" data-clrs>
+JOB-SEQUENCING(d, p)
+    sort jobs so that p[1] ≥ p[2] ≥ … ≥ p[n]
+    D = min(n, max deadline)
+    let slot[1..D] be a new array, all NIL
+    for i = 1 to n
+        for t = min(d[i], D) downto 1
+            if slot[t] == NIL
+                slot[t] = i   // latest free slot before the deadline
+                break
+    return slot
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+// returns {number of jobs done, total profit}
+pair<int, int> jobSequencing(vector<int>& d, vector<int>& p) {
+    int n = d.size();
+    vector<int> idx(n);
+    for (int i = 0; i < n; i++) idx[i] = i;
+    sort(idx.begin(), idx.end(), [&](int a, int b) { return p[a] > p[b]; });
+    int D = min(n, *max_element(d.begin(), d.end()));
+    vector<int> slot(D + 1, -1);
+    int count = 0, profit = 0;
+    for (int i : idx)
+        for (int t = min(d[i], D); t >= 1; t--)
+            if (slot[t] == -1) {
+                slot[t] = i;
+                count++;
+                profit += p[i];
+                break;
+            }
+    return {count, profit};
+}
+</script>
+<script type="text/plain" data-lang="java">
+static int[] jobSequencing(int[] d, int[] p) {
+    int n = d.length;
+    Integer[] idx = new Integer[n];
+    for (int i = 0; i < n; i++) idx[i] = i;
+    Arrays.sort(idx, (a, b) -> Integer.compare(p[b], p[a]));
+    int D = 0;
+    for (int x : d) D = Math.max(D, x);
+    D = Math.min(D, n);
+    int[] slot = new int[D + 1];
+    Arrays.fill(slot, -1);
+    int count = 0, profit = 0;
+    for (int i : idx)
+        for (int t = Math.min(d[i], D); t >= 1; t--)
+            if (slot[t] == -1) {
+                slot[t] = i;
+                count++;
+                profit += p[i];
+                break;
+            }
+    return new int[]{count, profit};
+}
+</script>
+<script type="text/plain" data-lang="python">
+def job_sequencing(d, p):
+    n = len(d)
+    order = sorted(range(n), key=lambda i: -p[i])
+    D = min(n, max(d))
+    slot = [None] * (D + 1)
+    profit = 0
+    for i in order:
+        for t in range(min(d[i], D), 0, -1):
+            if slot[t] is None:
+                slot[t] = i + 1
+                profit += p[i]
+                break
+    return slot[1:], profit
+
+print(job_sequencing([4, 2, 4, 3, 1, 4, 6], [70, 60, 50, 40, 30, 20, 10]))
+# ([4, 2, 3, 1, None, 7], 230)  -> missed penalty = 280 - 230 = 50
+</script>
+        </div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example — minimise penalty</h2>
+        <p class="muted">The jobs are already sorted by penalty (70, 60, …, 10). Slots 1 … 6.</p>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Job</th><th>Penalty</th><th>Deadline</th><th>Slots tried (latest first)</th><th>Placed in</th></tr></thead>
+            <tbody>
+              <tr><td>J1</td><td>70</td><td>4</td><td>4</td><td class="hl">slot 4</td></tr>
+              <tr><td>J2</td><td>60</td><td>2</td><td>2</td><td class="hl">slot 2</td></tr>
+              <tr><td>J3</td><td>50</td><td>4</td><td>4 ✗, 3</td><td class="hl">slot 3</td></tr>
+              <tr><td>J4</td><td>40</td><td>3</td><td>3 ✗, 2 ✗, 1</td><td class="hl">slot 1</td></tr>
+              <tr><td>J5</td><td>30</td><td>1</td><td>1 ✗</td><td class="x">rejected</td></tr>
+              <tr><td>J6</td><td>20</td><td>4</td><td>4 ✗, 3 ✗, 2 ✗, 1 ✗</td><td class="x">rejected</td></tr>
+              <tr><td>J7</td><td>10</td><td>6</td><td>6</td><td class="hl">slot 6</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="slots mt-2">
+          <div class="slot on"><small>0 – 1</small>J4</div>
+          <div class="slot on"><small>1 – 2</small>J2</div>
+          <div class="slot on"><small>2 – 3</small>J3</div>
+          <div class="slot on"><small>3 – 4</small>J1</div>
+          <div class="slot off"><small>4 – 5</small>idle</div>
+          <div class="slot on"><small>5 – 6</small>J7</div>
+        </div>
+        <p class="muted mt-2"><strong>Order: J4 → J2 → J3 → J1 → J7.</strong> Missed: J5 and J6, so the minimum penalty is <strong>30 + 20 = 50</strong>.</p>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">Jobs J1…J5, profit [20, 10, 5, 1, 15], deadline [2, 1, 3, 3, 2]. Maximise profit.</span></summary>
+          <div class="ans"><p>Sorted: J1 (20, d2), J5 (15, d2), J2 (10, d1), J3 (5, d3), J4 (1, d3). J1 → slot 2 · J5 → slot 1 · J2 → slot 1 taken, rejected · J3 → slot 3 · J4 → slots 3, 2, 1 taken, rejected.</p>
+            <p><strong>Sequence J5 → J1 → J3, profit 15 + 20 + 5 = 40.</strong></p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">Jobs J1…J7, profit [30, 25, 20, 35, 12, 15, 5], deadline [4, 4, 2, 3, 1, 3, 1]. Maximise profit.</span></summary>
+          <div class="ans"><p>Sorted: J4 35, J1 30, J2 25, J3 20, J6 15, J5 12, J7 5. J4 → slot 3 · J1 → slot 4 · J2 → 4 ✗, 3 ✗, slot 2 · J3 → 2 ✗, slot 1 · J6, J5, J7 → no free slot.</p>
+            <p><strong>Sequence J3 → J2 → J4 → J1, profit 20 + 25 + 35 + 30 = 110.</strong></p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">Why do we put a job in the <em>latest</em> free slot and not the earliest?</span></summary>
+          <div class="ans"><p>Try deadlines [2, 1] with profits [100, 50]. Earliest-slot puts the 100-job in slot 1, and the 50-job (deadline 1) has nowhere to go → 100. Latest-slot puts the 100-job in slot 2, leaving slot 1 for the other job → 150.</p></div></details>
+        <details class="ex"><summary><span class="qn">P4</span><span class="q">Speed up the slot search with a Disjoint Set Union.</span></summary>
+          <div class="ans"><p>Let <code>parent[t]</code> point to the latest free slot ≤ t (slot 0 means "none"). <code>find(d)</code> gives the slot to use; after using slot t, set <code>parent[t] = t − 1</code>. With path compression every lookup is almost O(1), so the total becomes O(n log n) for the sort + O(n α(n)).</p>
+            <pre class="code" style="margin:8px 0 0"><span class="ln">def find(t):</span><span class="ln">    while parent[t] != t:</span><span class="ln">        parent[t] = parent[parent[t]]</span><span class="ln">        t = parent[t]</span><span class="ln">    return t</span><span class="ln"># for each job (by profit): t = find(min(d, D)); if t &gt; 0: use slot t, parent[t] = t - 1</span></pre></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Only unit-time jobs.</strong> If jobs have different lengths, the problem becomes NP-hard in general (weighted scheduling with deadlines); greedy is not optimal.</p></div>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Only one machine.</strong> With several processors the slot idea must be extended.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Slow slot search.</strong> The simple version scans backwards for each job, O(n) per job → O(n²). Use a DSU for large inputs (n up to 10⁵ on GFG).</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Ties.</strong> Jobs with equal profit can be taken in any order; the profit is the same but the sequence can differ.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Step</th><th>Work</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td>Sort by profit</td><td>comparison sort of n jobs</td><td>O(n log n)</td></tr>
+              <tr><td>Create slot array</td><td>D = min(n, max deadline) slots</td><td>O(D) ⊆ O(n)</td></tr>
+              <tr><td>Place jobs (simple)</td><td>each of n jobs scans up to D slots backwards</td><td>O(n · D) = O(n²) worst case</td></tr>
+              <tr><td>Place jobs (DSU)</td><td>one find + one union per job</td><td>O(n α(n)) ≈ O(n)</td></tr>
+              <tr><td><b>Total</b></td><td>sort + placement</td><td><b>O(n²)</b> simple · <b>O(n log n)</b> with DSU</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Worst case</span><span class="v">O(n²)</span><span class="faint" style="font-size:.86rem">e.g. all deadlines = n: job k scans k − 1 full slots</span></div>
+          <div class="kbox"><span class="k">With DSU</span><span class="v">O(n log n)</span><span class="faint" style="font-size:.86rem">sort dominates</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(n)</span><span class="faint" style="font-size:.86rem">slot array + index array</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/job-sequencing-problem-1587115620/1" target="_blank" rel="noopener">Job Sequencing Problem</a></td><td><span class="chip medium">Medium</span></td><td>this page</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/course-schedule-iii/" target="_blank" rel="noopener">630. Course Schedule III</a></td><td><span class="chip hard">Hard</span></td><td>different durations → sort by deadline + max-heap</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/maximum-profit-in-job-scheduling/" target="_blank" rel="noopener">1235. Maximum Profit in Job Scheduling</a></td><td><span class="chip hard">Hard</span></td><td>intervals with profit → DP</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1630" target="_blank" rel="noopener">1630 · Tasks and Deadlines</a></td><td><span class="chip easy">Easy</span></td><td>reward = d − finish; shortest job first</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="activity-selection.html"><small>← Previous</small>02 · Activity Selection</a>
+          <a class="next" href="huffman-coding.html"><small>Next problem →</small>04 · Huffman Coding</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

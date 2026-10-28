@@ -947,3 +947,39 @@ pre.code .ln[data-quiet]::after { display: none; }
   .brand { font-size: 0; gap: 0; }
   .brand small { display: none; }
 }
+
+/* ---------- greedy track: simple study diagrams ---------- */
+.problem-list { display: grid; gap: 10px; counter-reset: pl; }
+.problem-list a { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); }
+.problem-list a:hover { text-decoration: none; border-color: var(--border-strong); background: var(--surface-2); }
+.problem-list .n { font: 700 .9rem var(--font-mono); color: var(--accent-3); }
+.problem-list .t b { display: block; }
+.problem-list .t span { font-size: .88rem; color: var(--text-dim); }
+.problem-list .c { font: 600 .8rem var(--font-mono); color: var(--text-faint); white-space: nowrap; }
+@media (max-width: 600px) { .problem-list a { grid-template-columns: 32px 1fr; } .problem-list .c { grid-column: 2; } }
+.timeline { --max: 16; display: grid; gap: 6px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.timeline .tl-row { display: grid; grid-template-columns: 48px 1fr; gap: 8px; align-items: center; font: 600 .8rem var(--font-mono); }
+.timeline .tl-track { position: relative; height: 18px; background: var(--surface-2); border-radius: 6px; }
+.timeline .tl-bar { position: absolute; top: 2px; bottom: 2px; left: calc(var(--s) / var(--max) * 100%); width: calc((var(--f) - var(--s)) / var(--max) * 100%); border-radius: 5px; background: var(--border-strong); color: var(--text-dim); font-size: .7rem; display: grid; place-items: center; }
+.timeline .tl-row.pick .tl-bar { background: var(--good); color: #fff; }
+.timeline .tl-row.pick { color: var(--good); }
+.slots { display: flex; flex-wrap: wrap; gap: 6px; }
+.slots .slot { min-width: 72px; padding: 8px 10px; border-radius: 9px; border: 1.5px solid var(--border-strong); background: var(--surface-2); text-align: center; font: 700 .9rem var(--font-mono); }
+.slots .slot small { display: block; font: 500 .7rem var(--font-mono); color: var(--text-faint); }
+.slots .slot.on { border-color: var(--good); background: var(--good-soft); color: var(--good); }
+.slots .slot.off { border-style: dashed; color: var(--text-faint); }
+.figure { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 12px; overflow-x: auto; }
+.figure svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.figure figcaption { font-size: .86rem; color: var(--text-faint); text-align: center; margin-top: 6px; }
+.gsvg .e { stroke: var(--border-strong); stroke-width: 1.6; fill: none; }
+.gsvg .e.hot { stroke: var(--good); stroke-width: 2.6; }
+.gsvg .nd { fill: var(--surface-2); stroke: var(--text-dim); stroke-width: 1.6; }
+.gsvg .nd.leaf { fill: var(--accent-3-soft); stroke: var(--accent-3); }
+.gsvg text { fill: var(--text); font: 600 13px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
+.gsvg text.w { fill: var(--text-dim); font-size: 12px; }
+.gsvg text.d { fill: var(--good); font-weight: 700; }
+.gsvg text.bit { fill: var(--accent); font-weight: 700; }
+.gsvg .arrow { fill: var(--border-strong); }
+.gsvg .arrow.hot { fill: var(--good); }
+.table td.hl, .table th.hl { color: var(--good); font-weight: 700; }
+.table td.x { color: var(--text-faint); text-decoration: line-through; }

@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Huffman Coding — Greedy · RecursionVerse</title>
+  <meta name="description" content="Huffman coding by greedy: repeatedly merge the two least frequent nodes with a min-heap. Worked examples with bit counts, code in C++/Java/Python, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="greedy"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Greedy</a><span>/</span><span>Huffman Coding</span></div>
+      <div class="eyebrow">Problem 04 · merge the two smallest</div>
+      <h1>Huffman Coding</h1>
+      <div class="chips mt-1"><span class="chip medium">Medium</span><span class="chip pink">greedy</span><span class="chip cyan">min-heap</span><span class="chip">O(n log n)</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/huffman-encoding3345/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Huffman Encoding</a>
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/minimum-cost-of-ropes-1587115620/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Minimum Cost of Ropes</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <div class="prose">
+          <p class="problem-statement">Huffman coding is a <strong>lossless compression</strong> technique. Data is treated as a sequence of characters. Given each character's <strong>frequency</strong>, assign each character a binary code so that:</p>
+          <ul>
+            <li>no code is a prefix of another (a <strong>prefix code</strong>, so decoding is unambiguous), and</li>
+            <li>the total number of bits <code>Σ freq(c) × length(code(c))</code> is <strong>minimum</strong>.</li>
+          </ul>
+          <p>Used for storing compressed files (ZIP / gzip's DEFLATE, JPEG, MP3) and sending data over the internet.</p>
+        </div>
+        <div class="example mt-2"><span class="k">text  </span>CCDDEABBCCEADDBBACCB   (20 characters)
+<span class="k">ASCII </span>20 × 8 = 160 bits
+<span class="k">out   </span><span class="o">Huffman: 45 bits  (+ 52-bit table = 97 bits stored)</span></div>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p>ASCII spends 8 bits on every character, common or rare. Huffman gives <strong>short codes to frequent characters</strong> and <strong>long codes to rare ones</strong> — like Morse code, where E is a single dot.</p>
+          <p>Codes come from a binary tree: characters are leaves, a left edge is <code>0</code>, a right edge is <code>1</code>, and a character's code is the path from the root. Depth = code length. So we want rare characters <strong>deep</strong> and frequent ones <strong>shallow</strong>.</p>
+          <p>The greedy step: the <strong>two least frequent</strong> characters should be the deepest — make them siblings by merging them into one node whose frequency is their sum. Then repeat as if that node were a single character.</p>
+        </div>
+        <div class="callout info mt-2"><span class="ic">i</span><p><strong>Why it is optimal:</strong> in some optimal tree the two least frequent characters x, y are sibling leaves at the maximum depth (swapping them with the deepest leaves can only reduce the cost). Merging them into z with <code>freq(z) = freq(x) + freq(y)</code> leaves a smaller problem whose optimal tree extends to an optimal tree for the original (CLRS Lemmas 16.2 and 16.3).</p></div>
+      </section>
+
+      <section class="section" id="technique" data-toc="Technique">
+        <h2>Solution technique</h2>
+        <div class="dry">
+          <div class="d"><span>Count the frequency of each character (frequency table).</span></div>
+          <div class="d"><span>Insert every character, as a leaf node, into a <strong>MIN-HEAP</strong> keyed by frequency.</span></div>
+          <div class="d"><span>Extract the two minimum nodes x and y; create a new node z with <code>z.left = x</code>, <code>z.right = y</code>, <code>z.freq = x.freq + y.freq</code>; insert z.</span></div>
+          <div class="d"><span>Repeat until the heap contains only one node — the root of the Huffman tree.</span></div>
+          <div class="d"><span>Label every left edge 0 and every right edge 1; read each leaf's code from root to leaf.</span></div>
+        </div>
+<script type="text/plain" data-clrs>
+HUFFMAN(C)
+    n = |C|
+    Q = C   // min-priority queue keyed on freq
+    for i = 1 to n - 1
+        allocate a new node z
+        z.left = x = EXTRACT-MIN(Q)
+        z.right = y = EXTRACT-MIN(Q)
+        z.freq = x.freq + y.freq
+        INSERT(Q, z)
+    return EXTRACT-MIN(Q)   // the root of the tree
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+struct Node {
+    int freq; char ch; Node *left, *right;
+    Node(int f, char c, Node* l = nullptr, Node* r = nullptr) : freq(f), ch(c), left(l), right(r) {}
+};
+struct Cmp { bool operator()(Node* a, Node* b) const { return a->freq > b->freq; } };
+
+void assign(Node* t, string code, map<char, string>& codes) {
+    if (!t->left) { codes[t->ch] = code.empty() ? "0" : code; return; }
+    assign(t->left, code + "0", codes);
+    assign(t->right, code + "1", codes);
+}
+
+map<char, string> huffman(map<char, int>& freq) {
+    priority_queue<Node*, vector<Node*>, Cmp> q;
+    for (auto& [c, f] : freq) q.push(new Node(f, c));
+    while (q.size() > 1) {
+        Node* x = q.top(); q.pop();
+        Node* y = q.top(); q.pop();
+        q.push(new Node(x->freq + y->freq, 0, x, y));
+    }
+    map<char, string> codes;
+    assign(q.top(), "", codes);
+    return codes;
+}
+</script>
+<script type="text/plain" data-lang="java">
+static class Node {
+    int freq; char ch; Node left, right;
+    Node(int f, char c, Node l, Node r) { freq = f; ch = c; left = l; right = r; }
+}
+
+static void assign(Node t, String code, Map<Character, String> codes) {
+    if (t.left == null) { codes.put(t.ch, code.isEmpty() ? "0" : code); return; }
+    assign(t.left, code + "0", codes);
+    assign(t.right, code + "1", codes);
+}
+
+static Map<Character, String> huffman(Map<Character, Integer> freq) {
+    PriorityQueue<Node> q = new PriorityQueue<>((a, b) -> a.freq - b.freq);
+    for (Map.Entry<Character, Integer> e : freq.entrySet())
+        q.add(new Node(e.getValue(), e.getKey(), null, null));
+    while (q.size() > 1) {
+        Node x = q.poll(), y = q.poll();
+        q.add(new Node(x.freq + y.freq, '\0', x, y));
+    }
+    Map<Character, String> codes = new HashMap<>();
+    assign(q.poll(), "", codes);
+    return codes;
+}
+</script>
+<script type="text/plain" data-lang="python">
+import heapq
+from collections import Counter
+
+def huffman(freq):
+    # heap items: (freq, tie_breaker, tree); a tree is a char or a (left, right) pair
+    heap = [(f, i, c) for i, (c, f) in enumerate(freq.items())]
+    heapq.heapify(heap)
+    k = len(heap)
+    while len(heap) > 1:
+        fx, _, x = heapq.heappop(heap)
+        fy, _, y = heapq.heappop(heap)
+        heapq.heappush(heap, (fx + fy, k, (x, y)))
+        k += 1
+    codes = {}
+    def assign(t, code):
+        if isinstance(t, str):
+            codes[t] = code or "0"
+            return
+        assign(t[0], code + "0")
+        assign(t[1], code + "1")
+    assign(heap[0][2], "")
+    return codes
+
+text = "CCDDEABBCCEADDBBACCB"
+codes = huffman(Counter(text))
+print(codes, sum(len(codes[c]) for c in text))   # 45 bits
+</script>
+        </div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example — CCDDEABBCCEADDBBACCB</h2>
+        <h3>1 · Merge steps (min-heap)</h3>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Step</th><th>Heap before</th><th>Extract two minimums</th><th>New node</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>E2, A3, D4, B5, C6</td><td>E2, A3</td><td>(EA) 5</td></tr>
+              <tr><td>2</td><td>D4, B5, (EA)5, C6</td><td>D4, (EA)5</td><td>(D(EA)) 9</td></tr>
+              <tr><td>3</td><td>B5, C6, 9</td><td>B5, C6</td><td>(BC) 11</td></tr>
+              <tr><td>4</td><td>9, 11</td><td>9, 11</td><td>root 20</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2">n = 5 characters → exactly n − 1 = 4 merges. In step 2 there is a tie (B5 and (EA)5); either choice gives an optimal tree.</p>
+
+        <h3 class="mt-3">2 · The Huffman tree (0 = left, 1 = right)</h3>
+        <figure class="figure">
+          <svg class="gsvg" viewBox="0 0 400 240" role="img" aria-label="Huffman tree for CCDDEABBCCEADDBBACCB">
+            <line class="e" x1="200" y1="25" x2="110" y2="85"/><line class="e" x1="200" y1="25" x2="290" y2="85"/>
+            <line class="e" x1="110" y1="85" x2="60" y2="145"/><line class="e" x1="110" y1="85" x2="160" y2="145"/>
+            <line class="e" x1="290" y1="85" x2="250" y2="145"/><line class="e" x1="290" y1="85" x2="330" y2="145"/>
+            <line class="e" x1="160" y1="145" x2="125" y2="205"/><line class="e" x1="160" y1="145" x2="195" y2="205"/>
+            <text class="bit" x="146" y="48">0</text><text class="bit" x="254" y="48">1</text>
+            <text class="bit" x="76" y="110">0</text><text class="bit" x="144" y="110">1</text>
+            <text class="bit" x="261" y="110">0</text><text class="bit" x="320" y="110">1</text>
+            <text class="bit" x="133" y="172">0</text><text class="bit" x="188" y="172">1</text>
+            <circle class="nd" cx="200" cy="25" r="16"/><text x="200" y="25">20</text>
+            <circle class="nd" cx="110" cy="85" r="16"/><text x="110" y="85">9</text>
+            <circle class="nd" cx="290" cy="85" r="16"/><text x="290" y="85">11</text>
+            <circle class="nd" cx="160" cy="145" r="16"/><text x="160" y="145">5</text>
+            <circle class="nd leaf" cx="60" cy="145" r="16"/><text x="60" y="145">D4</text>
+            <circle class="nd leaf" cx="250" cy="145" r="16"/><text x="250" y="145">B5</text>
+            <circle class="nd leaf" cx="330" cy="145" r="16"/><text x="330" y="145">C6</text>
+            <circle class="nd leaf" cx="125" cy="205" r="16"/><text x="125" y="205">E2</text>
+            <circle class="nd leaf" cx="195" cy="205" r="16"/><text x="195" y="205">A3</text>
+          </svg>
+          <figcaption>Leaves (pink) are characters; internal nodes hold the summed frequency.</figcaption>
+        </figure>
+
+        <h3 class="mt-3">3 · Codes and bit count</h3>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Char</th><th>Freq</th><th>Code</th><th>Bits used</th></tr></thead>
+            <tbody>
+              <tr><td>A</td><td>3</td><td><code>011</code></td><td>3 × 3 = 9</td></tr>
+              <tr><td>B</td><td>5</td><td><code>10</code></td><td>5 × 2 = 10</td></tr>
+              <tr><td>C</td><td>6</td><td><code>11</code></td><td>6 × 2 = 12</td></tr>
+              <tr><td>D</td><td>4</td><td><code>00</code></td><td>4 × 2 = 8</td></tr>
+              <tr><td>E</td><td>2</td><td><code>010</code></td><td>2 × 3 = 6</td></tr>
+              <tr><td><b>Total</b></td><td>20</td><td>12 code bits</td><td class="hl">45 bits</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Without compression</span><span class="v">160 bits</span><span class="faint" style="font-size:.86rem">20 chars × 8 bits</span></div>
+          <div class="kbox"><span class="k">Encoded message</span><span class="v">45 bits</span><span class="faint" style="font-size:.86rem">Σ freq × code length</span></div>
+          <div class="kbox"><span class="k">Total stored / sent</span><span class="v">97 bits</span><span class="faint" style="font-size:.86rem">table: 5 chars × 8 + 12 code bits = 52; plus 45</span></div>
+        </div>
+        <p class="muted mt-2">To decode at the receiver's end, the table (each letter + its code) must be sent along with the message. Decoding: start at the root, follow 0 / 1 bits, output the character at each leaf, jump back to the root.</p>
+      </section>
+
+      <section class="section" id="more" data-toc="More examples">
+        <h2>More worked examples</h2>
+        <details class="ex"><summary><span class="qn">E2</span><span class="q">BANANA_BANDANA_BABANA_BANANA (28 characters)</span></summary>
+          <div class="ans"><p>Frequencies: A 12, N 7, B 5, _ 3, D 1.</p>
+            <p>Merges: D1 + _3 = 4 · 4 + B5 = 9 · N7 + 9 = 16 · A12 + 16 = 28.</p>
+            <p>Codes: A <code>0</code>, N <code>10</code>, B <code>111</code>, D <code>1100</code>, _ <code>1101</code>.</p>
+            <p>Bits: 12·1 + 7·2 + 5·3 + 1·4 + 3·4 = <strong>57</strong> (vs 28 × 8 = 224). Table: 5 × 8 + 14 = 54. <strong>Total 111 bits.</strong></p></div></details>
+        <details class="ex"><summary><span class="qn">E3</span><span class="q">a 45, b 13, c 12, d 16, e 9, f 5 (CLRS, 100 characters)</span></summary>
+          <div class="ans"><p>Merges: f5 + e9 = 14 · c12 + b13 = 25 · 14 + d16 = 30 · 25 + 30 = 55 · a45 + 55 = 100.</p>
+            <p>Codes: a <code>0</code>, c <code>100</code>, b <code>101</code>, f <code>1100</code>, e <code>1101</code>, d <code>111</code>.</p>
+            <p>Bits: 45 + 39 + 36 + 48 + 36 + 20 = <strong>224</strong> (vs 800). Table: 6 × 8 + 18 = 66. <strong>Total 290 bits.</strong></p></div></details>
+        <details class="ex"><summary><span class="qn">E4</span><span class="q">m 4, n 7, o 8, p 3, q 1, r 4 (27 characters)</span></summary>
+          <div class="ans"><p>Merges: q1 + p3 = 4 · (qp)4 + m4 = 8 · r4 + n7 = 11 · 8 + o8 = 16 · 11 + 16 = 27.</p>
+            <p>Codes: r <code>00</code>, n <code>01</code>, q <code>1000</code>, p <code>1001</code>, m <code>101</code>, o <code>11</code>.</p>
+            <p>Bits: 8 + 14 + 4 + 12 + 12 + 16 = <strong>66</strong> (vs 216). Table: 6 × 8 + 17 = 65. <strong>Total 131 bits.</strong></p>
+            <p class="faint">With different tie-breaking (merge r4 + m4 instead of (qp)4 + m4) you get a different tree whose code lengths add to 16 — the message is still 66 bits. The message size is always the same; the table size can differ slightly.</p></div></details>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">Frequencies a 10, e 15, i 12, o 3, u 4, s 13, t 1 (58 characters). Build the tree and find the number of bits.</span></summary>
+          <div class="ans"><p>Merges: t1 + o3 = 4 · 4 + u4 = 8 · 8 + a10 = 18 · i12 + s13 = 25 · e15 + 18 = 33 · 25 + 33 = 58.</p>
+            <p>Code lengths: i, s, e → 2 · a → 3 · u → 4 · o, t → 5. One labelling: i <code>00</code>, s <code>01</code>, e <code>10</code>, a <code>111</code>, u <code>1100</code>, t <code>11010</code>, o <code>11011</code>.</p>
+            <p>Bits: 24 + 26 + 30 + 30 + 16 + 15 + 5 = <strong>146</strong> (vs 58 × 8 = 464).</p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">Decode <code>1111000010</code> using the tree of the worked example (D 00, E 010, A 011, B 10, C 11).</span></summary>
+          <div class="ans"><p>11 → C, 11 → C, 00 → D, 00 → D, 10 → B. <strong>CCDDB.</strong></p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">If all 8 characters have the same frequency, what codes does Huffman produce?</span></summary>
+          <div class="ans"><p>A perfectly balanced tree: every code has length 3 — the same as a fixed-length code. Huffman helps only when frequencies are uneven.</p></div></details>
+        <details class="ex"><summary><span class="qn">P4</span><span class="q">Ropes of lengths 4, 3, 2, 6. Joining two ropes costs the sum of their lengths. Minimum total cost?</span></summary>
+          <div class="ans"><p>Exactly Huffman's merging: 2 + 3 = 5 · 4 + 5 = 9 · 6 + 9 = 15. Cost 5 + 9 + 15 = <strong>29</strong>.</p></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Two passes over the data.</strong> First count frequencies, then encode. Not suitable for streaming unless you use adaptive Huffman.</p></div>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>The code table must be stored / sent.</strong> For short messages the table can cost more than it saves.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Whole bits per symbol.</strong> A character with probability 0.9 still needs at least 1 bit. Arithmetic coding gets closer to the entropy limit.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Ignores context.</strong> It looks at single-character frequencies only, not repeated words or patterns — that is why real compressors (DEFLATE) combine it with LZ77.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>One bit error</strong> can corrupt everything after it, because codes have variable length.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Step</th><th>Work</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td>Count frequencies</td><td>one pass over a text of length m</td><td>O(m)</td></tr>
+              <tr><td>Build the min-heap</td><td>BUILD-MIN-HEAP on n characters</td><td>O(n)</td></tr>
+              <tr><td>Loop</td><td>n − 1 iterations, each 2 EXTRACT-MIN + 1 INSERT, each O(log n)</td><td>O(n log n)</td></tr>
+              <tr><td>Assign codes</td><td>one DFS over 2n − 1 nodes</td><td>O(n)</td></tr>
+              <tr><td>Encode the text</td><td>output every bit once</td><td>O(m + encoded bits)</td></tr>
+              <tr><td><b>Building the tree</b></td><td>O(n) + O(n log n) + O(n)</td><td><b>O(n log n)</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Time</span><span class="v">O(n log n)</span><span class="faint" style="font-size:.86rem">n = number of distinct characters</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(n)</span><span class="faint" style="font-size:.86rem">heap + 2n − 1 tree nodes</span></div>
+          <div class="kbox"><span class="k">Pre-sorted input</span><span class="v">O(n)</span><span class="faint" style="font-size:.86rem">two-queue method: leaves in one queue, merged nodes in another</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/huffman-encoding3345/1" target="_blank" rel="noopener">Huffman Encoding</a></td><td><span class="chip medium">Medium</span></td><td>this page (print codes in preorder)</td></tr>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/minimum-cost-of-ropes-1587115620/1" target="_blank" rel="noopener">Minimum Cost of Ropes</a></td><td><span class="chip easy">Easy</span></td><td>same merge, cost = sum of merges</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/last-stone-weight/" target="_blank" rel="noopener">1046. Last Stone Weight</a></td><td><span class="chip easy">Easy</span></td><td>repeatedly take two from a heap</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="job-sequencing.html"><small>← Previous</small>03 · Job Sequencing</a>
+          <a class="next" href="dijkstra.html"><small>Next problem →</small>05 · Dijkstra</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

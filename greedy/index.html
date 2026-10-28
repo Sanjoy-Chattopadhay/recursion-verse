@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Greedy Algorithms — RecursionVerse</title>
+  <meta name="description" content="Greedy algorithms: the idea, when it is safe, and five classic problems — Fractional Knapsack, Activity Selection, Job Sequencing, Huffman Coding and Dijkstra — with examples, code and complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="greedy"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><span>Greedy</span></div>
+      <div class="eyebrow">Track 4 · Greedy</div>
+      <h1>Greedy Algorithms</h1>
+      <p class="lede">At every step, take the best-looking option <em>right now</em> and never look back. Simple, fast — and correct only when the problem allows it.</p>
+      <div class="chips mt-1"><span class="chip pink">commit, never revisit</span><span class="chip">5 problems</span><span class="chip">examples + practice</span></div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problems" data-toc="Problems">
+        <h2>Problems in this track</h2>
+        <p class="muted">Each page has: problem statement, intuition, the greedy technique, worked examples, practice questions with answers, drawbacks and a detailed time-complexity breakdown.</p>
+        <div class="problem-list mt-2">
+          <a href="fractional-knapsack.html"><span class="n">01</span><span class="t"><b>Fractional Knapsack</b><span>Fill a bag of capacity M to maximise profit; items can be cut.</span></span><span class="c">O(n log n)</span></a>
+          <a href="activity-selection.html"><span class="n">02</span><span class="t"><b>Activity Selection</b><span>Pick the most non-overlapping activities — sort by finish time.</span></span><span class="c">O(n log n)</span></a>
+          <a href="job-sequencing.html"><span class="n">03</span><span class="t"><b>Job Sequencing with Deadlines</b><span>Unit-time jobs with deadlines and profit / penalty.</span></span><span class="c">O(n²)</span></a>
+          <a href="huffman-coding.html"><span class="n">04</span><span class="t"><b>Huffman Coding</b><span>Optimal prefix codes for lossless compression using a min-heap.</span></span><span class="c">O(n log n)</span></a>
+          <a href="dijkstra.html"><span class="n">05</span><span class="t"><b>Dijkstra's Shortest Path</b><span>Single-source shortest paths with non-negative edge weights.</span></span><span class="c">O((V+E) log V)</span></a>
+        </div>
+      </section>
+
+      <section class="section" id="what" data-toc="What is greedy?">
+        <h2>What is a greedy algorithm?</h2>
+        <div class="prose">
+          <p>A greedy algorithm is a design strategy for <strong>optimisation problems</strong> (maximise or minimise something). At every step we choose the <strong>best immediate (local) option</strong>, hoping it leads to the <strong>best overall (global) solution</strong>.</p>
+          <p>Previous choices are <strong>never reconsidered</strong> — once a decision is made, it is final. That is what makes greedy fast, and also what makes it dangerous.</p>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Recursion / Backtracking</span><span class="v">try every choice</span><span class="faint" style="font-size:.86rem">explore the whole tree, undo and retry</span></div>
+          <div class="kbox"><span class="k">Dynamic Programming</span><span class="v">try every choice once</span><span class="faint" style="font-size:.86rem">explore all, but cache sub-answers</span></div>
+          <div class="kbox"><span class="k">Greedy</span><span class="v">take one choice</span><span class="faint" style="font-size:.86rem">follow a single root → leaf path, no going back</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="when" data-toc="When does it work?">
+        <h2>When is greedy correct?</h2>
+        <p class="muted">A greedy algorithm gives the optimal answer when the problem has both of these properties:</p>
+        <div class="grid grid-2 mt-2">
+          <div class="card card-flat">
+            <h4>1 · Greedy-choice property</h4>
+            <p class="muted mb-0">There is always an optimal solution that contains the greedy choice. So making that choice first never hurts. (Usually proved with an <em>exchange argument</em>: take any optimal solution, swap in the greedy choice, show it is no worse.)</p>
+          </div>
+          <div class="card card-flat">
+            <h4>2 · Optimal substructure</h4>
+            <p class="muted mb-0">After making the greedy choice, what remains is a smaller instance of the same problem, and an optimal answer to it combines with the choice to give an optimal answer overall.</p>
+          </div>
+        </div>
+        <div class="callout warn mt-2"><span class="ic">!</span><p>DP also needs optimal substructure. The difference: greedy additionally needs the greedy-choice property, so it can skip exploring alternatives.</p></div>
+      </section>
+
+      <section class="section" id="recipe" data-toc="The recipe">
+        <h2>The greedy recipe</h2>
+        <div class="dry">
+          <div class="d"><span><strong>Find the key</strong> — what makes one choice "best"? (profit/weight ratio, earliest finish time, highest profit, smallest frequency, smallest distance)</span></div>
+          <div class="d"><span><strong>Order by the key</strong> — sort the input, or keep it in a priority queue (min-heap / max-heap) when the key changes as you go.</span></div>
+          <div class="d"><span><strong>Pick and check</strong> — take the next best item if it is feasible (fits in the bag, does not overlap, has a free slot …), otherwise skip it.</span></div>
+          <div class="d"><span><strong>Never undo</strong> — move on. Stop when the input or the capacity is exhausted.</span></div>
+        </div>
+<script type="text/plain" data-clrs>
+GREEDY(C)
+    S = ∅
+    sort C by the greedy key   // or build a priority queue
+    for each candidate x in C in that order
+        if S ∪ {x} is feasible
+            S = S ∪ {x}
+    return S
+</script>
+        <p class="muted mt-2">Typical cost: <strong>O(n log n)</strong> for the sort / heap + <strong>O(n)</strong> for the single pass.</p>
+      </section>
+
+      <section class="section" id="fails" data-toc="When greedy fails">
+        <h2>When greedy fails</h2>
+        <div class="grid grid-2">
+          <div class="card card-flat">
+            <h4 class="bad">0/1 Knapsack</h4>
+            <p class="muted">Capacity 50; items (w, p): (10, 60), (20, 100), (30, 120). Ratios 6, 5, 4.</p>
+            <p class="muted">Greedy by ratio takes items 1 and 2 → profit <b class="bad">160</b>, 20 units wasted. Best is items 2 + 3 → <b class="good">220</b>. Items cannot be cut, so greedy fails. Use DP.</p>
+          </div>
+          <div class="card card-flat">
+            <h4 class="bad">Coin change with coins {1, 3, 4}</h4>
+            <p class="muted">Make 6 with the fewest coins. Greedy takes the largest coin first: 4 + 1 + 1 = <b class="bad">3 coins</b>. Optimal: 3 + 3 = <b class="good">2 coins</b>.</p>
+            <p class="muted">Greedy works for "canonical" systems like {1, 2, 5, 10} but not in general. Use DP.</p>
+          </div>
+          <div class="card card-flat">
+            <h4 class="bad">Dijkstra with negative edges</h4>
+            <p class="muted mb-0">Once a vertex is finalised, Dijkstra never updates it again. A negative edge found later could have given a shorter path. Use Bellman–Ford.</p>
+          </div>
+          <div class="card card-flat">
+            <h4 class="bad">Largest number in K swaps</h4>
+            <p class="muted mb-0">With repeated digits, which copy you move matters (4577, k = 2 → 7754, not 7745). See the <a href="../backtracking/k-swaps.html">backtracking page</a>.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="summary" data-toc="Summary table">
+        <h2>Summary of the five problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Problem</th><th>Greedy key</th><th>Data structure</th><th>Time</th><th>Space</th></tr></thead>
+            <tbody>
+              <tr><td><a href="fractional-knapsack.html"><b>Fractional Knapsack</b></a></td><td>highest profit / weight first</td><td>sort</td><td>O(n log n)</td><td>O(n)</td></tr>
+              <tr><td><a href="activity-selection.html"><b>Activity Selection</b></a></td><td>earliest finish time first</td><td>sort</td><td>O(n log n)</td><td>O(1) extra</td></tr>
+              <tr><td><a href="job-sequencing.html"><b>Job Sequencing</b></a></td><td>highest profit first, latest free slot ≤ deadline</td><td>sort + slot array (or DSU)</td><td>O(n²) · O(n log n) with DSU</td><td>O(n)</td></tr>
+              <tr><td><a href="huffman-coding.html"><b>Huffman Coding</b></a></td><td>merge the two least frequent</td><td>min-heap</td><td>O(n log n)</td><td>O(n)</td></tr>
+              <tr><td><a href="dijkstra.html"><b>Dijkstra</b></a></td><td>closest unvisited vertex</td><td>min-heap</td><td>O((V + E) log V)</td><td>O(V)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="practice" data-toc="More practice">
+        <h2>More greedy practice</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>Greedy idea</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/assign-cookies/" target="_blank" rel="noopener">455. Assign Cookies</a></td><td><span class="chip easy">Easy</span></td><td>sort both, smallest cookie that satisfies</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/lemonade-change/" target="_blank" rel="noopener">860. Lemonade Change</a></td><td><span class="chip easy">Easy</span></td><td>give the largest note first</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/jump-game/" target="_blank" rel="noopener">55. Jump Game</a></td><td><span class="chip medium">Medium</span></td><td>track the farthest reachable index</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/gas-station/" target="_blank" rel="noopener">134. Gas Station</a></td><td><span class="chip medium">Medium</span></td><td>restart after the tank goes negative</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/candy/" target="_blank" rel="noopener">135. Candy</a></td><td><span class="chip hard">Hard</span></td><td>two passes, left and right</td></tr>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/minimum-platforms-1587115620/1" target="_blank" rel="noopener">Minimum Platforms</a></td><td><span class="chip medium">Medium</span></td><td>sort arrivals and departures</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1629" target="_blank" rel="noopener">1629 · Movie Festival</a></td><td><span class="chip easy">Easy</span></td><td>activity selection</td></tr>
+              <tr><td><span class="plat">Codeforces</span></td><td><a href="https://codeforces.com/problemset/tags/greedy" target="_blank" rel="noopener">Greedy tag — problemset</a></td><td><span class="chip">mixed</span></td><td>filter by rating 800 → 1400</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="../index.html"><small>← Back</small>Home</a>
+          <a class="next" href="fractional-knapsack.html"><small>Start →</small>01 · Fractional Knapsack</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>
