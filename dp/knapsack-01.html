@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0/1 Knapsack — Dynamic Programming · RecursionVerse</title>
+  <meta name="description" content="0/1 knapsack by dynamic programming: the take-or-skip recurrence, the full DP table, traceback, code in C++/Java/Python, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="dp"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Dynamic Programming</a><span>/</span><span>0/1 Knapsack</span></div>
+      <div class="eyebrow">Problem 01 · take it or leave it</div>
+      <h1>0/1 Knapsack</h1>
+      <div class="chips mt-1"><span class="chip medium">Medium</span><span class="chip amber">DP</span><span class="chip">O(n·W)</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/0-1-knapsack-problem0945/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · 0 - 1 Knapsack</a>
+        <a class="plink" href="https://atcoder.jp/contests/dp/tasks/dp_d" target="_blank" rel="noopener"><span class="dot dot-at"></span>AtCoder DP · D Knapsack 1</a>
+        <a class="plink" href="https://cses.fi/problemset/task/1158" target="_blank" rel="noopener"><span class="dot dot-cses"></span>CSES 1158 · Book Shop</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <p class="problem-statement prose">A bag can carry at most <strong>W</strong> units of weight. There are <strong>n</strong> items; item i has weight <code>w[i]</code> and profit <code>p[i]</code>. Each item is either <strong>taken whole (1) or left (0)</strong> — no fractions. Choose items with total weight ≤ W and <strong>maximum total profit</strong>.</p>
+        <div class="grid grid-2 mt-2">
+          <div class="example"><span class="k">W = </span>5
+<span class="k">w = </span>[2, 3, 4, 5]
+<span class="k">p = </span>[3, 4, 5, 6]
+<span class="k">out  </span><span class="o">7  (items 1 and 2)</span></div>
+          <div class="example"><span class="k">W = </span>50
+<span class="k">w = </span>[10, 20, 30]
+<span class="k">p = </span>[60, 100, 120]
+<span class="k">out  </span><span class="o">220  (items 2 and 3)</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p><strong>Why not greedy?</strong> In the second example, the best ratio is item 1 (6/unit), then item 2 (5), then item 3 (4). Greedy takes items 1 + 2 = 160 and has 20 units left that item 3 (weight 30) can't use. The best is items 2 + 3 = <strong>220</strong>. Since items can't be cut, a locally good choice can waste space.</p>
+          <p><strong>Look at the last item.</strong> In the best answer, item n is either <em>not taken</em> — then the answer is the best for items 1..n−1 with the same capacity — or <em>taken</em> — then it is p[n] plus the best for items 1..n−1 with capacity W − w[n]. Take whichever is larger. Those smaller questions repeat a lot, so we store them in a table.</p>
+        </div>
+      </section>
+
+      <section class="section" id="technique" data-toc="Recurrence">
+        <h2>State and recurrence</h2>
+        <div class="prose">
+          <p><code>T[i][j]</code> = maximum profit using only items 1..i with capacity j.</p>
+        </div>
+        <div class="example mt-2"><span class="k">T[0][j] = 0, T[i][0] = 0</span>
+<span class="k">T[i][j] = T[i−1][j]</span>                               if w[i] &gt; j   (can't take)
+<span class="k">T[i][j] = max( T[i−1][j], p[i] + T[i−1][j − w[i]] )</span>   otherwise
+<span class="k">answer   </span><span class="o">T[n][W]</span></div>
+<script type="text/plain" data-clrs>
+KNAPSACK-01(w, p, W)
+    n = w.length
+    let T[0..n, 0..W] be a new table
+    for j = 0 to W
+        T[0, j] = 0
+    for i = 1 to n
+        for j = 0 to W
+            T[i, j] = T[i - 1, j]   // skip item i
+            if w[i] ≤ j and p[i] + T[i - 1, j - w[i]] > T[i, j]
+                T[i, j] = p[i] + T[i - 1, j - w[i]]   // take item i
+    return T[n, W]
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+int knapsack(vector<int>& w, vector<int>& p, int W) {
+    int n = w.size();
+    vector<vector<int>> T(n + 1, vector<int>(W + 1, 0));
+    for (int i = 1; i <= n; i++)
+        for (int j = 0; j <= W; j++) {
+            T[i][j] = T[i - 1][j];                                     // skip
+            if (w[i - 1] <= j)
+                T[i][j] = max(T[i][j], p[i - 1] + T[i - 1][j - w[i - 1]]); // take
+        }
+    // traceback: which items were taken?
+    for (int i = n, j = W; i > 0; i--)
+        if (T[i][j] != T[i - 1][j]) { cout << "item " << i << "\n"; j -= w[i - 1]; }
+    return T[n][W];
+}
+</script>
+<script type="text/plain" data-lang="java">
+static int knapsack(int[] w, int[] p, int W) {
+    int n = w.length;
+    int[][] T = new int[n + 1][W + 1];
+    for (int i = 1; i <= n; i++)
+        for (int j = 0; j <= W; j++) {
+            T[i][j] = T[i - 1][j];
+            if (w[i - 1] <= j)
+                T[i][j] = Math.max(T[i][j], p[i - 1] + T[i - 1][j - w[i - 1]]);
+        }
+    for (int i = n, j = W; i > 0; i--)
+        if (T[i][j] != T[i - 1][j]) { System.out.println("item " + i); j -= w[i - 1]; }
+    return T[n][W];
+}
+</script>
+<script type="text/plain" data-lang="python">
+def knapsack(w, p, W):
+    n = len(w)
+    T = [[0] * (W + 1) for _ in range(n + 1)]
+    for i in range(1, n + 1):
+        for j in range(W + 1):
+            T[i][j] = T[i - 1][j]                                   # skip
+            if w[i - 1] <= j:
+                T[i][j] = max(T[i][j], p[i - 1] + T[i - 1][j - w[i - 1]])  # take
+    items, j = [], W
+    for i in range(n, 0, -1):                                       # traceback
+        if T[i][j] != T[i - 1][j]:
+            items.append(i)
+            j -= w[i - 1]
+    return T[n][W], items[::-1]
+
+print(knapsack([2, 3, 4, 5], [3, 4, 5, 6], 5))  # (7, [1, 2])
+</script>
+        </div>
+        <div class="callout tip mt-2"><span class="ic">✓</span><p><strong>Space saving:</strong> row i only needs row i − 1. Use one array <code>dp[0..W]</code> and loop <code>j</code> from <strong>W down to w[i]</strong>: <code>dp[j] = max(dp[j], p[i] + dp[j − w[i]])</code>. Going downwards makes sure each item is used at most once. Space O(W).</p></div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example — W = 5, w = [2, 3, 4, 5], p = [3, 4, 5, 6]</h2>
+        <div class="table-wrap">
+          <table class="table matrix">
+            <thead><tr><th>i (w, p) \ j</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
+            <tbody>
+              <tr><th>0 — none</th><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+              <tr><th>1 (2, 3)</th><td>0</td><td>0</td><td class="chg">3</td><td>3</td><td>3</td><td>3</td></tr>
+              <tr><th>2 (3, 4)</th><td>0</td><td>0</td><td>3</td><td>4</td><td>4</td><td class="chg">7</td></tr>
+              <tr><th>3 (4, 5)</th><td>0</td><td>0</td><td>3</td><td>4</td><td>5</td><td>7</td></tr>
+              <tr><th>4 (5, 6)</th><td>0</td><td>0</td><td>3</td><td>4</td><td>5</td><td class="piv">7</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="dry mt-2">
+          <div class="d"><span><code>T[2][5] = max(T[1][5], 4 + T[1][5 − 3]) = max(3, 4 + 3) = 7</code> — take item 2 together with item 1.</span></div>
+          <div class="d"><span><code>T[3][5] = max(T[2][5], 5 + T[2][1]) = max(7, 5) = 7</code> — item 3 is not worth it.</span></div>
+          <div class="d"><span><code>T[4][5] = max(T[3][5], 6 + T[3][0]) = max(7, 6) = 7</code>.</span></div>
+          <div class="d"><span><strong>Traceback</strong> from T[4][5] = 7: equals T[3][5] → skip 4; equals T[2][5] → skip 3; T[2][5] = 7 ≠ T[1][5] = 3 → <b>take 2</b>, j = 2; T[1][2] = 3 ≠ T[0][2] → <b>take 1</b>.</span></div>
+        </div>
+        <p class="muted mt-2"><strong>Answer: profit 7 with items {1, 2}</strong> (weight 5).</p>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">W = 7, w = [1, 3, 4, 5], p = [1, 4, 5, 7]. Fill the table and find the items.</span></summary>
+          <div class="ans"><p>Last row: 0, 1, 1, 4, 5, 7, 8, <strong>9</strong>. <strong>Answer 9 with items {2, 3}</strong> (weights 3 + 4 = 7). Items {1, 4} give only 8.</p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">W = 50, w = [10, 20, 30], p = [60, 100, 120] (CLRS). What do greedy and DP give?</span></summary>
+          <div class="ans"><p>Greedy by ratio: items 1 + 2 = 160. DP: <strong>220</strong> with items {2, 3}. (Fractional knapsack would give 240.)</p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">W = 6, w = [2, 3, 3, 4], p = [1, 2, 5, 9].</span></summary>
+          <div class="ans"><p><strong>10</strong>, items {1, 4} (weights 2 + 4 = 6). Items {2, 3} give only 7.</p></div></details>
+        <details class="ex"><summary><span class="qn">P4</span><span class="q">How many cells does the table have for n = 100, W = 10<sup>9</sup>? What then?</span></summary>
+          <div class="ans"><p>10<sup>11</sup> — too many. If profits are small, swap the roles: <code>minWeight[i][profit]</code> (AtCoder DP E, Knapsack 2). The algorithm is <em>pseudo-polynomial</em>: polynomial in the value W, not in the input size.</p></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Pseudo-polynomial.</strong> O(n·W) depends on the <em>value</em> of W. W needs only log W bits to write, so for huge W the table is impossibly large. 0/1 knapsack is NP-complete.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Integer weights only.</strong> Real-valued weights can't index the table (scale them, or use branch and bound).</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Memory:</strong> the full table costs O(n·W); the 1-D trick saves memory but loses the traceback.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Approach</th><th>Why</th><th>Time</th><th>Space</th></tr></thead>
+            <tbody>
+              <tr><td>Brute force / plain recursion</td><td>each item in or out → 2<sup>n</sup> subsets, O(n) to check each</td><td>O(n·2<sup>n</sup>)</td><td>O(n)</td></tr>
+              <tr><td>DP table</td><td>(n + 1)(W + 1) cells, O(1) each</td><td><b>Θ(n·W)</b></td><td>Θ(n·W)</td></tr>
+              <tr><td>Traceback</td><td>one step per item</td><td>O(n)</td><td>—</td></tr>
+              <tr><td>1-D array version</td><td>same cells, one row kept</td><td>Θ(n·W)</td><td><b>Θ(W)</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Time</span><span class="v">Θ(n·W)</span><span class="faint" style="font-size:.86rem">pseudo-polynomial</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">Θ(n·W) → Θ(W)</span><span class="faint" style="font-size:.86rem">rolling array</span></div>
+          <div class="kbox"><span class="k">Brute force</span><span class="v">O(2<sup>n</sup>)</span><span class="faint" style="font-size:.86rem">what DP saves you from</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/0-1-knapsack-problem0945/1" target="_blank" rel="noopener">0 - 1 Knapsack Problem</a></td><td><span class="chip medium">Medium</span></td><td>this page</td></tr>
+              <tr><td><span class="plat">AtCoder</span></td><td><a href="https://atcoder.jp/contests/dp/tasks/dp_d" target="_blank" rel="noopener">DP D · Knapsack 1</a></td><td><span class="chip medium">Medium</span></td><td>this page, W ≤ 10<sup>5</sup></td></tr>
+              <tr><td><span class="plat">AtCoder</span></td><td><a href="https://atcoder.jp/contests/dp/tasks/dp_e" target="_blank" rel="noopener">DP E · Knapsack 2</a></td><td><span class="chip hard">Hard</span></td><td>huge W → DP over profit</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1158" target="_blank" rel="noopener">1158 · Book Shop</a></td><td><span class="chip medium">Medium</span></td><td>price = weight, pages = profit</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/partition-equal-subset-sum/" target="_blank" rel="noopener">416. Partition Equal Subset Sum</a></td><td><span class="chip medium">Medium</span></td><td>boolean knapsack to sum / 2</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/target-sum/" target="_blank" rel="noopener">494. Target Sum</a></td><td><span class="chip medium">Medium</span></td><td>counting knapsack</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="index.html"><small>← Track</small>DP overview</a>
+          <a class="next" href="floyd-warshall.html"><small>Next problem →</small>02 · Floyd's All-Pairs Shortest Paths</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

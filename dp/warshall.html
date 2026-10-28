@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Warshall's Transitive Closure — Dynamic Programming · RecursionVerse</title>
+  <meta name="description" content="Warshall's algorithm for the transitive closure of a directed graph: R(k) boolean matrices step by step, code in C++/Java/Python, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="dp"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Dynamic Programming</a><span>/</span><span>Warshall's Algorithm</span></div>
+      <div class="eyebrow">Problem 03 · who can reach whom?</div>
+      <h1>Transitive Closure — Warshall's Algorithm</h1>
+      <div class="chips mt-1"><span class="chip easy">Easy</span><span class="chip amber">DP</span><span class="chip">Θ(V³)</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/transitive-closure-of-a-graph0930/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Transitive closure of a Graph</a>
+        <a class="plink" href="https://leetcode.com/problems/course-schedule-iv/" target="_blank" rel="noopener"><span class="dot dot-lc"></span>LeetCode 1462</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <p class="problem-statement prose">Given a directed graph as an <strong>adjacency matrix A</strong> (<code>A[i][j] = 1</code> if there is an edge i→j), compute its <strong>transitive closure</strong> R: <code>R[i][j] = 1</code> if there is a <strong>path</strong> (of length ≥ 1) from i to j, else 0.</p>
+        <div class="example mt-2"><span class="k">edges </span>1→2, 2→4, 4→1, 4→3
+<span class="k">out   </span><span class="o">R = [[1,1,1,1], [1,1,1,1], [0,0,0,0], [1,1,1,1]]</span>
+<span class="k">      </span>(vertex 3 has no outgoing edge, so it reaches nothing)</div>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p>It is <a href="floyd-warshall.html">Floyd's algorithm</a> with booleans. <code>R<sup>(k)</sup>[i][j] = 1</code> if there is a path from i to j whose intermediate vertices all come from {1, …, k}.</p>
+          <p>Such a path either avoids k (then <code>R<sup>(k−1)</sup>[i][j] = 1</code>) or goes i ⇝ k ⇝ j (then <code>R<sup>(k−1)</sup>[i][k] = 1</code> <strong>and</strong> <code>R<sup>(k−1)</sup>[k][j] = 1</code>).</p>
+          <p><strong>Rule of thumb for hand-working:</strong> at step k, for every row i that has a 1 in column k, OR row k into row i.</p>
+        </div>
+      </section>
+
+      <section class="section" id="technique" data-toc="Recurrence">
+        <h2>Recurrence and algorithm</h2>
+        <div class="example"><span class="k">R(0) = A</span>
+<span class="k">R(k)[i][j] = R(k−1)[i][j]  OR  ( R(k−1)[i][k]  AND  R(k−1)[k][j] )</span></div>
+<script type="text/plain" data-clrs>
+WARSHALL(A)
+    n = A.rows
+    R = A
+    for k = 1 to n
+        for i = 1 to n
+            for j = 1 to n
+                R[i, j] = R[i, j] or (R[i, k] and R[k, j])
+    return R
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+void warshall(vector<vector<int>>& R) {
+    int n = R.size();
+    for (int k = 0; k < n; k++)
+        for (int i = 0; i < n; i++)
+            if (R[i][k])                         // row i can reach k ...
+                for (int j = 0; j < n; j++)
+                    R[i][j] = R[i][j] || R[k][j]; // ... so it reaches all k reaches
+}
+</script>
+<script type="text/plain" data-lang="java">
+static void warshall(boolean[][] R) {
+    int n = R.length;
+    for (int k = 0; k < n; k++)
+        for (int i = 0; i < n; i++)
+            if (R[i][k])
+                for (int j = 0; j < n; j++)
+                    R[i][j] = R[i][j] || R[k][j];
+}
+</script>
+<script type="text/plain" data-lang="python">
+def warshall(A):
+    n = len(A)
+    R = [row[:] for row in A]
+    for k in range(n):
+        for i in range(n):
+            if R[i][k]:
+                for j in range(n):
+                    R[i][j] = R[i][j] or R[k][j]
+    return R
+
+A = [[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 0, 0], [1, 0, 1, 0]]
+print(warshall(A))  # [[1,1,1,1],[1,1,1,1],[0,0,0,0],[1,1,1,1]]
+</script>
+        </div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example — R<sup>(0)</sup> to R<sup>(4)</sup></h2>
+        <p class="muted">Edges 1→2, 2→4, 4→1, 4→3. Green cells became 1 in this step.</p>
+<div class="grid grid-2 mt-2">
+<div><h4 class="mb-0" style="margin-bottom:6px">R<sup>(0)</sup> — direct edges only</h4><div class="table-wrap"><table class="table matrix"><thead><tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead><tbody><tr><th>1</th><td>0</td><td>1</td><td>0</td><td>0</td></tr><tr><th>2</th><td>0</td><td>0</td><td>0</td><td>1</td></tr><tr><th>3</th><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><th>4</th><td>1</td><td>0</td><td>1</td><td>0</td></tr></tbody></table></div></div>
+<div><h4 class="mb-0" style="margin-bottom:6px">R<sup>(1)</sup> — via vertex 1</h4><div class="table-wrap"><table class="table matrix"><thead><tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead><tbody><tr><th>1</th><td class="piv">0</td><td class="piv">1</td><td class="piv">0</td><td class="piv">0</td></tr><tr><th>2</th><td class="piv">0</td><td>0</td><td>0</td><td>1</td></tr><tr><th>3</th><td class="piv">0</td><td>0</td><td>0</td><td>0</td></tr><tr><th>4</th><td class="piv">1</td><td class="chg">1</td><td>1</td><td>0</td></tr></tbody></table></div></div>
+<div><h4 class="mb-0" style="margin-bottom:6px">R<sup>(2)</sup> — via vertex 2</h4><div class="table-wrap"><table class="table matrix"><thead><tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead><tbody><tr><th>1</th><td>0</td><td class="piv">1</td><td>0</td><td class="chg">1</td></tr><tr><th>2</th><td class="piv">0</td><td class="piv">0</td><td class="piv">0</td><td class="piv">1</td></tr><tr><th>3</th><td>0</td><td class="piv">0</td><td>0</td><td>0</td></tr><tr><th>4</th><td>1</td><td class="piv">1</td><td>1</td><td class="chg">1</td></tr></tbody></table></div></div>
+<div><h4 class="mb-0" style="margin-bottom:6px">R<sup>(3)</sup> — via vertex 3</h4><div class="table-wrap"><table class="table matrix"><thead><tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead><tbody><tr><th>1</th><td>0</td><td>1</td><td class="piv">0</td><td>1</td></tr><tr><th>2</th><td>0</td><td>0</td><td class="piv">0</td><td>1</td></tr><tr><th>3</th><td class="piv">0</td><td class="piv">0</td><td class="piv">0</td><td class="piv">0</td></tr><tr><th>4</th><td>1</td><td>1</td><td class="piv">1</td><td>1</td></tr></tbody></table></div></div>
+<div><h4 class="mb-0" style="margin-bottom:6px">R<sup>(4)</sup> — via vertex 4</h4><div class="table-wrap"><table class="table matrix"><thead><tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead><tbody><tr><th>1</th><td class="chg">1</td><td>1</td><td class="chg">1</td><td class="piv">1</td></tr><tr><th>2</th><td class="chg">1</td><td class="chg">1</td><td class="chg">1</td><td class="piv">1</td></tr><tr><th>3</th><td>0</td><td>0</td><td>0</td><td class="piv">0</td></tr><tr><th>4</th><td class="piv">1</td><td class="piv">1</td><td class="piv">1</td><td class="piv">1</td></tr></tbody></table></div></div>
+</div>
+        <div class="dry mt-2">
+          <div class="d"><span><b>k = 1:</b> only row 4 has a 1 in column 1 → OR row 1 (0100) into row 4: 4 now reaches 2.</span></div>
+          <div class="d"><span><b>k = 2:</b> rows 1 and 4 have a 1 in column 2 → OR row 2 (0001) into them: 1 reaches 4, 4 reaches 4 (a cycle 4→1→2→4).</span></div>
+          <div class="d"><span><b>k = 3:</b> row 3 is all 0, so nothing changes.</span></div>
+          <div class="d"><span><b>k = 4:</b> rows 1, 2, 4 have a 1 in column 4 → OR row 4 (1111) into them. Rows 1 and 2 become all 1.</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">Edges 1→2, 2→3, 3→4 (a chain). Find the closure.</span></summary>
+          <div class="ans"><p>R = [[0,1,1,1], [0,0,1,1], [0,0,0,1], [0,0,0,0]] — every vertex reaches all later ones; the diagonal stays 0 (no cycles).</p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">How can you tell from R whether the graph has a cycle?</span></summary>
+          <div class="ans"><p>A vertex i is on a cycle exactly when <code>R[i][i] = 1</code>.</p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">How can you tell whether the graph is strongly connected?</span></summary>
+          <div class="ans"><p>All entries of R are 1.</p></div></details>
+        <details class="ex"><summary><span class="qn">P4</span><span class="q">Is there a faster way for a sparse graph?</span></summary>
+          <div class="ans"><p>Run BFS/DFS from every vertex: V × O(V + E) = O(V² + VE). With bitsets, Warshall's inner loop becomes V/64 word operations: O(V³/64).</p></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Θ(V³) even when the graph is sparse</strong> — repeated BFS/DFS is faster then.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Only yes / no.</strong> It tells you that a path exists, not how long it is or what it is (use Floyd for lengths).</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Θ(V²) memory</strong> — an adjacency list cannot be used directly.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Part</th><th>Work</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td>Copy A into R</td><td>V² entries</td><td>Θ(V²)</td></tr>
+              <tr><td>Triple loop</td><td>V × V × V boolean operations</td><td>Θ(V³)</td></tr>
+              <tr><td>With the <code>if R[i][k]</code> skip</td><td>inner loop runs only for rows that reach k</td><td>still O(V³) worst case</td></tr>
+              <tr><td><b>Total</b></td><td></td><td><b>Θ(V³)</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Time</span><span class="v">Θ(V³)</span><span class="faint" style="font-size:.86rem">O(V³ / w) with w-bit words</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">Θ(V²)</span><span class="faint" style="font-size:.86rem">one boolean matrix</span></div>
+          <div class="kbox"><span class="k">Alternative</span><span class="v">O(V(V + E))</span><span class="faint" style="font-size:.86rem">BFS / DFS from every vertex</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/transitive-closure-of-a-graph0930/1" target="_blank" rel="noopener">Transitive closure of a Graph</a></td><td><span class="chip medium">Medium</span></td><td>this page (diagonal = 1 there)</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/course-schedule-iv/" target="_blank" rel="noopener">1462. Course Schedule IV</a></td><td><span class="chip medium">Medium</span></td><td>is u a prerequisite of v?</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/find-eventual-safe-states/" target="_blank" rel="noopener">802. Find Eventual Safe States</a></td><td><span class="chip medium">Medium</span></td><td>reachability of cycles</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="floyd-warshall.html"><small>← Previous</small>02 · Floyd's APSP</a>
+          <a class="next" href="resource-allocation.html"><small>Next problem →</small>04 · Resource Allocation</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

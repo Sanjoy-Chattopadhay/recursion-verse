@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dynamic Programming — RecursionVerse</title>
+  <meta name="description" content="Dynamic programming: overlapping sub-problems, optimal substructure, memoisation and tabulation, with 0/1 Knapsack, Floyd's and Warshall's algorithms and the resource allocation problem.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="dp"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><span>Dynamic Programming</span></div>
+      <div class="eyebrow">Track 3 · Dynamic Programming</div>
+      <h1>Dynamic Programming</h1>
+      <p class="lede">Solve every sub-problem <em>once</em>, store the answer in a table, and build the final answer from smaller ones. The answer lives at the root.</p>
+      <div class="chips mt-1"><span class="chip amber">answer at the root</span><span class="chip">4 problems</span><span class="chip">examples + practice</span></div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problems" data-toc="Problems">
+        <h2>Problems in this track</h2>
+        <p class="muted">Each page has: problem statement, intuition, the recurrence, worked examples with the full table, practice questions with answers, drawbacks and a detailed time-complexity breakdown.</p>
+        <div class="problem-list mt-2">
+          <a href="knapsack-01.html"><span class="n">01</span><span class="t"><b>0/1 Knapsack</b><span>Take an item whole or not at all — the table of best profits.</span></span><span class="c">O(n·W)</span></a>
+          <a href="floyd-warshall.html"><span class="n">02</span><span class="t"><b>All-Pairs Shortest Paths — Floyd's Algorithm</b><span>Allow intermediate vertices 1..k, one k at a time.</span></span><span class="c">O(V³)</span></a>
+          <a href="warshall.html"><span class="n">03</span><span class="t"><b>Transitive Closure — Warshall's Algorithm</b><span>Which vertex can reach which? Boolean Floyd.</span></span><span class="c">O(V³)</span></a>
+          <a href="resource-allocation.html"><span class="n">04</span><span class="t"><b>Resource Allocation Problem</b><span>Split N units among projects to maximise total profit.</span></span><span class="c">O(m·N²)</span></a>
+        </div>
+      </section>
+
+      <section class="section" id="what" data-toc="What is DP?">
+        <h2>What is dynamic programming?</h2>
+        <div class="prose">
+          <p>Dynamic programming (DP) solves an optimisation problem by breaking it into <strong>sub-problems</strong>, solving each sub-problem <strong>only once</strong>, and <strong>storing</strong> its answer in a table so it is never recomputed.</p>
+          <p>Plain recursion on these problems recomputes the same sub-problems again and again (Fibonacci: fib(5) calls fib(3) twice, fib(2) three times …) and takes exponential time. DP turns that into polynomial time.</p>
+        </div>
+        <div class="grid grid-2 mt-2">
+          <div class="card card-flat">
+            <h4>1 · Optimal substructure</h4>
+            <p class="muted mb-0">An optimal solution is built from optimal solutions of sub-problems. (Shortest path A→C through B = shortest A→B + shortest B→C.)</p>
+          </div>
+          <div class="card card-flat">
+            <h4>2 · Overlapping sub-problems</h4>
+            <p class="muted mb-0">The same sub-problems appear many times in the recursion tree. If they don't overlap, plain divide &amp; conquer is enough.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="how" data-toc="Two ways to do DP">
+        <h2>Two ways to do DP</h2>
+        <div class="grid grid-2">
+          <div class="card card-flat">
+            <h4>Top-down (memoisation)</h4>
+            <p class="muted">Write the natural recursion, and before computing a state check a cache; after computing, store it.</p>
+            <pre class="code" style="margin:0"><span class="ln">def fib(n, memo={}):</span><span class="ln">    if n &lt;= 1: return n</span><span class="ln">    if n not in memo:</span><span class="ln">        memo[n] = fib(n-1) + fib(n-2)</span><span class="ln">    return memo[n]</span></pre>
+          </div>
+          <div class="card card-flat">
+            <h4>Bottom-up (tabulation)</h4>
+            <p class="muted">Fill a table from the smallest sub-problems upward, in an order where every needed entry is already filled.</p>
+            <pre class="code" style="margin:0"><span class="ln">def fib(n):</span><span class="ln">    f = [0, 1] + [0] * (n - 1)</span><span class="ln">    for i in range(2, n + 1):</span><span class="ln">        f[i] = f[i-1] + f[i-2]</span><span class="ln">    return f[n]</span></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="recipe" data-toc="The DP recipe">
+        <h2>The DP recipe</h2>
+        <div class="dry">
+          <div class="d"><span><strong>Define the state</strong> — what does <code>T[i][j]</code> mean in words? (best profit using the first i items with capacity j)</span></div>
+          <div class="d"><span><strong>Write the recurrence</strong> — how is a state built from smaller states? (take item i or skip it)</span></div>
+          <div class="d"><span><strong>Base cases</strong> — the smallest states you know directly (0 items → profit 0).</span></div>
+          <div class="d"><span><strong>Order of filling</strong> — so every state you need is already computed.</span></div>
+          <div class="d"><span><strong>Answer + reconstruction</strong> — which cell holds the answer, and how to trace back the choices.</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="compare" data-toc="DP vs Greedy vs D&C">
+        <h2>DP vs Greedy vs Divide &amp; Conquer</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th></th><th>Divide &amp; Conquer</th><th>Dynamic Programming</th><th>Greedy</th></tr></thead>
+            <tbody>
+              <tr><td>Sub-problems</td><td>independent</td><td>overlapping</td><td>only one is ever solved</td></tr>
+              <tr><td>Choices</td><td>—</td><td>tries all, keeps the best</td><td>commits to the locally best</td></tr>
+              <tr><td>Always optimal?</td><td>yes</td><td>yes</td><td>only with the greedy-choice property</td></tr>
+              <tr><td>Example</td><td>merge sort</td><td>0/1 knapsack</td><td>fractional knapsack</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="summary" data-toc="Summary table">
+        <h2>Summary of the four problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Problem</th><th>State</th><th>Recurrence</th><th>Time</th><th>Space</th></tr></thead>
+            <tbody>
+              <tr><td><a href="knapsack-01.html"><b>0/1 Knapsack</b></a></td><td>T[i][w]</td><td>max(T[i−1][w], p<sub>i</sub> + T[i−1][w − w<sub>i</sub>])</td><td>O(n·W)</td><td>O(n·W) → O(W)</td></tr>
+              <tr><td><a href="floyd-warshall.html"><b>Floyd's APSP</b></a></td><td>D<sup>(k)</sup>[i][j]</td><td>min(D[i][j], D[i][k] + D[k][j])</td><td>Θ(V³)</td><td>Θ(V²)</td></tr>
+              <tr><td><a href="warshall.html"><b>Warshall's closure</b></a></td><td>R<sup>(k)</sup>[i][j]</td><td>R[i][j] or (R[i][k] and R[k][j])</td><td>Θ(V³)</td><td>Θ(V²)</td></tr>
+              <tr><td><a href="resource-allocation.html"><b>Resource Allocation</b></a></td><td>f<sub>i</sub>(x)</td><td>max<sub>k</sub> P<sub>i</sub>(k) + f<sub>i+1</sub>(x − k)</td><td>O(m·N²)</td><td>O(m·N)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2">Related pages in other tracks: <a href="../greedy/reliability.html">Optimal Reliability Allocation</a> (exact solution is a DP), <a href="../greedy/bellman-ford.html">Bellman–Ford</a> (a DP over the number of edges).</p>
+        <div class="pager">
+          <a href="../index.html"><small>← Back</small>Home</a>
+          <a class="next" href="knapsack-01.html"><small>Start →</small>01 · 0/1 Knapsack</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

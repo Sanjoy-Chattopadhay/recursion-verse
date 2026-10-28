@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resource Allocation Problem — Dynamic Programming · RecursionVerse</title>
+  <meta name="description" content="The resource allocation problem by dynamic programming: split N units among projects to maximise profit, stage by stage. Worked example, code, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="dp"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Dynamic Programming</a><span>/</span><span>Resource Allocation</span></div>
+      <div class="eyebrow">Problem 04 · stage by stage</div>
+      <h1>Resource Allocation Problem</h1>
+      <div class="chips mt-1"><span class="chip medium">Medium</span><span class="chip amber">DP</span><span class="chip">multistage</span><span class="chip">O(m·N²)</span></div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <p class="problem-statement prose">We have <strong>N units of a resource</strong> (money, machines, workers) and <strong>m projects</strong>. Giving k units to project i earns profit <code>P<sub>i</sub>(k)</code> (a table; <code>P<sub>i</sub>(0) = 0</code>). Units are indivisible. Decide how many units <code>x<sub>i</sub></code> each project gets, with <code>x<sub>1</sub> + … + x<sub>m</sub> = N</code>, to <strong>maximise total profit</strong> <code>Σ P<sub>i</sub>(x<sub>i</sub>)</code>.</p>
+        <div class="table-wrap mt-2">
+          <table class="table matrix">
+            <thead><tr><th>Units k</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead>
+            <tbody>
+              <tr><th>Project 1 — P₁(k)</th><td>0</td><td>4</td><td>6</td><td>7</td><td>8</td></tr>
+              <tr><th>Project 2 — P₂(k)</th><td>0</td><td>2</td><td>5</td><td>6</td><td>7</td></tr>
+              <tr><th>Project 3 — P₃(k)</th><td>0</td><td>3</td><td>4</td><td>6</td><td>9</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2">N = 4 units. <strong>Answer: profit 12</strong> with allocation (1, 2, 1).</p>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p>Think of it as a <strong>multistage decision</strong>: stage 1 decides project 1's share, stage 2 project 2's, and so on. After a decision, all that matters for the future is <strong>how many units are left</strong> — that number is the <em>state</em>.</p>
+          <p>Let <code>f<sub>i</sub>(x)</code> = the best profit obtainable from projects i, i+1, …, m with x units left. If project i gets k units, it earns <code>P<sub>i</sub>(k)</code> and the rest optimally earn <code>f<sub>i+1</sub>(x − k)</code>. Try every k, keep the best.</p>
+          <p><strong>Greedy can fail:</strong> "give each unit to the project with the biggest next gain" sees project 2's first unit as worth only +2, although its second unit is worth +3 — returns are not concave. With ties broken towards project 1 it hands out 1 → P₁, 1 → P₃, 1 → P₁, 1 → P₂ for a profit of only 11. Trying all splits is necessary.</p>
+          <p>It is the same as finding a longest path in a <strong>multistage graph</strong>: vertices (stage i, units left x), an edge for every choice k with weight P<sub>i</sub>(k).</p>
+        </div>
+      </section>
+
+      <section class="section" id="technique" data-toc="Recurrence">
+        <h2>Recurrence and algorithm</h2>
+        <div class="example"><span class="k">f(m+1, x) = 0</span>                                 for every x
+<span class="k">f(i, x)   = max over k = 0..x of  P_i(k) + f(i+1, x − k)</span>
+<span class="k">answer    </span><span class="o">f(1, N)</span>   (store the best k in choice(i, x) to rebuild the allocation)</div>
+<script type="text/plain" data-clrs>
+RESOURCE-ALLOCATION(P, m, N)
+    for x = 0 to N
+        f[m + 1, x] = 0
+    for i = m downto 1
+        for x = 0 to N
+            f[i, x] = -∞
+            for k = 0 to x
+                if P[i, k] + f[i + 1, x - k] > f[i, x]
+                    f[i, x] = P[i, k] + f[i + 1, x - k]
+                    choice[i, x] = k
+    return f[1, N]
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+// P[i][k] = profit of giving k units to project i (i = 0..m-1, k = 0..N)
+int allocate(vector<vector<int>>& P, int N, vector<int>& alloc) {
+    int m = P.size();
+    vector<vector<int>> f(m + 1, vector<int>(N + 1, 0)), choice(m, vector<int>(N + 1, 0));
+    for (int i = m - 1; i >= 0; i--)
+        for (int x = 0; x <= N; x++) {
+            f[i][x] = INT_MIN;
+            for (int k = 0; k <= x; k++)
+                if (P[i][k] + f[i + 1][x - k] > f[i][x]) {
+                    f[i][x] = P[i][k] + f[i + 1][x - k];
+                    choice[i][x] = k;
+                }
+        }
+    alloc.assign(m, 0);
+    for (int i = 0, x = N; i < m; i++) { alloc[i] = choice[i][x]; x -= alloc[i]; }
+    return f[0][N];
+}
+</script>
+<script type="text/plain" data-lang="java">
+static int allocate(int[][] P, int N, int[] alloc) {
+    int m = P.length;
+    int[][] f = new int[m + 1][N + 1], choice = new int[m][N + 1];
+    for (int i = m - 1; i >= 0; i--)
+        for (int x = 0; x <= N; x++) {
+            f[i][x] = Integer.MIN_VALUE;
+            for (int k = 0; k <= x; k++)
+                if (P[i][k] + f[i + 1][x - k] > f[i][x]) {
+                    f[i][x] = P[i][k] + f[i + 1][x - k];
+                    choice[i][x] = k;
+                }
+        }
+    for (int i = 0, x = N; i < m; i++) { alloc[i] = choice[i][x]; x -= alloc[i]; }
+    return f[0][N];
+}
+</script>
+<script type="text/plain" data-lang="python">
+def allocate(P, N):
+    m = len(P)
+    f = [[0] * (N + 1) for _ in range(m + 1)]
+    choice = [[0] * (N + 1) for _ in range(m)]
+    for i in range(m - 1, -1, -1):
+        for x in range(N + 1):
+            f[i][x], choice[i][x] = max((P[i][k] + f[i + 1][x - k], k) for k in range(x + 1))
+    alloc, x = [], N
+    for i in range(m):
+        alloc.append(choice[i][x])
+        x -= choice[i][x]
+    return f[0][N], alloc
+
+P = [[0, 4, 6, 7, 8], [0, 2, 5, 6, 7], [0, 3, 4, 6, 9]]
+print(allocate(P, 4))  # (12, [1, 2, 1])
+</script>
+        </div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example — N = 4</h2>
+        <h3>Stage 3 (project 3 alone): f₃(x) = P₃(x)</h3>
+        <div class="table-wrap">
+          <table class="table matrix">
+            <thead><tr><th>x</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead>
+            <tbody><tr><th>f₃(x)</th><td>0</td><td>3</td><td>4</td><td>6</td><td>9</td></tr></tbody>
+          </table>
+        </div>
+        <h3 class="mt-3">Stage 2 (projects 2 + 3): f₂(x) = max<sub>k</sub> P₂(k) + f₃(x − k)</h3>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>x</th><th>Options k = 0, 1, …, x</th><th>f₂(x)</th><th>best k</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td>0 + 0</td><td>0</td><td>0</td></tr>
+              <tr><td>1</td><td>0+3, 2+0</td><td>3</td><td>0</td></tr>
+              <tr><td>2</td><td>0+4, 2+3, 5+0</td><td>5</td><td>1 or 2</td></tr>
+              <tr><td>3</td><td>0+6, 2+4, <b>5+3</b>, 6+0</td><td class="hl">8</td><td>2</td></tr>
+              <tr><td>4</td><td>0+9, 2+6, 5+4, 6+3, 7+0</td><td>9</td><td>0, 2 or 3</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3 class="mt-3">Stage 1 (all projects): f₁(4) = max<sub>k</sub> P₁(k) + f₂(4 − k)</h3>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>k (units to project 1)</th><th>P₁(k)</th><th>f₂(4 − k)</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td>0</td><td>9</td><td>9</td></tr>
+              <tr><td>1</td><td>4</td><td>8</td><td class="hl">12</td></tr>
+              <tr><td>2</td><td>6</td><td>5</td><td>11</td></tr>
+              <tr><td>3</td><td>7</td><td>3</td><td>10</td></tr>
+              <tr><td>4</td><td>8</td><td>0</td><td>8</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2"><strong>Traceback:</strong> project 1 gets 1 unit (3 left) → f₂(3) chose k = 2, so project 2 gets 2 (1 left) → project 3 gets 1. <strong>Allocation (1, 2, 1), profit 4 + 5 + 3 = 12.</strong></p>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">N = 5. P₁ = [0, 3, 7, 9, 12, 13], P₂ = [0, 5, 10, 11, 11, 11], P₃ = [0, 4, 6, 11, 12, 12]. Find the best allocation.</span></summary>
+          <div class="ans"><p>Maximum profit <strong>21</strong>, reached by two allocations: (2, 2, 1) → 7 + 10 + 4, and (0, 2, 3) → 0 + 10 + 11. Optimal answers need not be unique.</p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">How many allocations would brute force try for m projects and N units?</span></summary>
+          <div class="ans"><p>The number of ways to write N as an ordered sum of m non-negative integers: C(N + m − 1, m − 1). For N = 20, m = 10 that is 10 015 005 — DP needs only m·(N+1)²/2 ≈ 2 200 steps.</p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">If the profit tables were concave (each extra unit gives less than the previous one), what simpler method works?</span></summary>
+          <div class="ans"><p>Greedy: hand out units one at a time to the project with the largest marginal gain. Concavity guarantees it is optimal; with non-concave tables (like P₃ above) it can fail.</p></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Pseudo-polynomial.</strong> Running time grows with N², the <em>value</em> of the resource — large budgets need scaling or approximation.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Assumes independent projects.</strong> If profits interact (one project helps another), the state "units left" is no longer enough.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Needs the whole profit table</strong> for every project and every amount.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Part</th><th>Work</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td>States</td><td>m stages × (N + 1) values of x</td><td>O(m·N)</td></tr>
+              <tr><td>Work per state</td><td>try k = 0..x, at most N + 1 options</td><td>O(N)</td></tr>
+              <tr><td>Fill table</td><td>Σ over stages of Σ<sub>x</sub>(x + 1) = m·(N+1)(N+2)/2</td><td><b>O(m·N²)</b></td></tr>
+              <tr><td>Traceback</td><td>one step per project</td><td>O(m)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Time</span><span class="v">O(m·N²)</span><span class="faint" style="font-size:.86rem">vs C(N+m−1, m−1) brute force</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(m·N)</span><span class="faint" style="font-size:.86rem">f and choice tables; O(N) without traceback</span></div>
+          <div class="kbox"><span class="k">As a graph</span><span class="v">O(V + E)</span><span class="faint" style="font-size:.86rem">multistage graph: V = m·N, E = m·N²</span></div>
+        </div>
+        <div class="pager">
+          <a href="warshall.html"><small>← Previous</small>03 · Warshall's Closure</a>
+          <a class="next" href="index.html"><small>Back to →</small>DP overview</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

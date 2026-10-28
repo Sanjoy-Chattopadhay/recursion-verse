@@ -54,6 +54,8 @@
           <a href="k-swaps.html"><span class="n">02</span><span class="t"><b>Largest Number in K Swaps</b><span>Why greedy fails on repeated digits.</span></span><span class="c">O(n^k · n)</span></a>
           <a href="hamiltonian-cycle.html"><span class="n">03</span><span class="t"><b>Hamiltonian Cycle</b><span>Visit every vertex once and return; path + visited[].</span></span><span class="c">O(n!)</span></a>
           <a href="graph-coloring.html"><span class="n">04</span><span class="t"><b>Graph Colouring (m-colouring)</b><span>No edge joins two equal colours; isSafe().</span></span><span class="c">O(m^V · V)</span></a>
+          <a href="n-queens.html"><span class="n">05</span><span class="t"><b>n-Queen Problem</b><span>One queen per row; column and diagonal checks.</span></span><span class="c">O(n!)</span></a>
+          <a href="sum-of-subsets.html"><span class="n">06</span><span class="t"><b>Sum of Subsets</b><span>Include / exclude with two pruning bounds.</span></span><span class="c">O(2ⁿ)</span></a>
         </div>
       </section>
 
@@ -420,7 +422,7 @@ BACKTRACK-ONE(state)
       <!-- ============ 8. PROBLEMS ============ -->
       <section class="section" id="problems" data-toc="Worked problems">
         <div class="eyebrow">08 · Worked problems</div>
-        <h2>Four problems, fully animated</h2>
+        <h2>Worked problems</h2>
         <div class="grid grid-2 mt-2">
           <a class="card card-link pcard" href="permutations.html">
             <div class="card-kicker"><span class="num">01</span> strings · pass by value vs reference</div>
@@ -449,6 +451,20 @@ BACKTRACK-ONE(state)
             <p class="muted">Colour every vertex with at most m colours so no edge joins two equal colours. The choice is the colour, not the vertex.</p>
             <div class="pattern-line">choices: colour 1..m · isValid: no neighbour shares it · undo: colour ← 0</div>
             <div class="meta"><span class="chip medium">Medium</span><span class="chip">GFG</span><span class="chip">LeetCode 785 · 1042</span><span class="chip">AtCoder ABC199 D</span></div>
+          </a>
+          <a class="card card-link pcard" href="n-queens.html">
+            <div class="card-kicker"><span class="num">05</span> boards · diagonals</div>
+            <h3>n-Queen Problem</h3>
+            <p class="muted">One queen per row; a column is safe if no earlier queen shares its column or diagonal.</p>
+            <div class="pattern-line">choices: column 1..n · isValid: PLACE(k, c) · undo: overwrite x[k]</div>
+            <div class="meta"><span class="chip hard">Hard</span><span class="chip">GFG</span><span class="chip">LeetCode 51 · 52</span><span class="chip">CSES 1624</span></div>
+          </a>
+          <a class="card card-link pcard" href="sum-of-subsets.html">
+            <div class="card-kicker"><span class="num">06</span> numbers · two bounds</div>
+            <h3>Sum of Subsets</h3>
+            <p class="muted">Include or exclude each weight; kill a branch when it overshoots M or can no longer reach it.</p>
+            <div class="pattern-line">choices: x[k] = 1 / 0 · isValid: s + w[k+1] ≤ M, s + r ≥ M · undo: x[k] = 0</div>
+            <div class="meta"><span class="chip medium">Medium</span><span class="chip">GFG</span><span class="chip">LeetCode 40</span><span class="chip">CSES 1623</span></div>
           </a>
         </div>
       </section>

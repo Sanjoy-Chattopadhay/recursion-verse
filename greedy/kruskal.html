@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kruskal's Algorithm (MST) — Greedy · RecursionVerse</title>
+  <meta name="description" content="Kruskal's minimum spanning tree algorithm: sort edges, take each edge that does not form a cycle, using union-find. Worked example, code, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="greedy"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Greedy</a><span>/</span><span>Kruskal's MST</span></div>
+      <div class="eyebrow">Problem 07 · cheapest edge, no cycle</div>
+      <h1>Minimum Spanning Tree — Kruskal's Algorithm</h1>
+      <div class="chips mt-1"><span class="chip medium">Medium</span><span class="chip pink">greedy</span><span class="chip cyan">union-find</span><span class="chip">O(E log E)</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/minimum-spanning-tree/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Minimum Spanning Tree</a>
+        <a class="plink" href="https://cses.fi/problemset/task/1675" target="_blank" rel="noopener"><span class="dot dot-cses"></span>CSES 1675 · Road Reparation</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <p class="problem-statement prose">Same problem as <a href="prim.html">Prim</a>: given a connected, undirected, weighted graph, find a spanning tree (V − 1 edges, no cycle, every vertex connected) of <strong>minimum total weight</strong>.</p>
+        <figure class="figure mt-2">
+<svg class="gsvg" viewBox="0 0 480 220" role="img" aria-label="Kruskal MST on the CLRS graph">
+<line class="e hot" x1="43" y1="99" x2="97" y2="51"/>
+<text class="w" x="77" y="83">4</text>
+<line class="e hot" x1="43" y1="121" x2="97" y2="169"/>
+<text class="w" x="63" y="153">8</text>
+<line class="e" x1="127" y1="40" x2="213" y2="40"/>
+<text class="w" x="170" y="51">8</text>
+<line class="e" x1="110" y1="57" x2="110" y2="163"/>
+<text class="w" x="99" y="110">11</text>
+<line class="e hot" x1="247" y1="40" x2="333" y2="40"/>
+<text class="w" x="290" y="51">7</text>
+<line class="e hot" x1="241" y1="53" x2="339" y2="167"/>
+<text class="w" x="282" y="117">4</text>
+<line class="e hot" x1="219" y1="53" x2="181" y2="97"/>
+<text class="w" x="192" y="68">2</text>
+<line class="e hot" x1="363" y1="50" x2="427" y2="100"/>
+<text class="w" x="388" y="84">9</text>
+<line class="e" x1="350" y1="57" x2="350" y2="163"/>
+<text class="w" x="339" y="110">14</text>
+<line class="e" x1="427" y1="120" x2="363" y2="170"/>
+<text class="w" x="388" y="136">10</text>
+<line class="e hot" x1="333" y1="180" x2="247" y2="180"/>
+<text class="w" x="290" y="169">2</text>
+<line class="e hot" x1="213" y1="180" x2="127" y2="180"/>
+<text class="w" x="170" y="169">1</text>
+<line class="e" x1="219" y1="167" x2="181" y2="123"/>
+<text class="w" x="208" y="138">6</text>
+<line class="e" x1="121" y1="167" x2="159" y2="123"/>
+<text class="w" x="148" y="152">7</text>
+<circle class="nd" cx="30" cy="110" r="16"/><text x="30" y="110">a</text>
+<circle class="nd" cx="110" cy="40" r="16"/><text x="110" y="40">b</text>
+<circle class="nd" cx="230" cy="40" r="16"/><text x="230" y="40">c</text>
+<circle class="nd" cx="350" cy="40" r="16"/><text x="350" y="40">d</text>
+<circle class="nd" cx="440" cy="110" r="16"/><text x="440" y="110">e</text>
+<circle class="nd" cx="350" cy="180" r="16"/><text x="350" y="180">f</text>
+<circle class="nd" cx="230" cy="180" r="16"/><text x="230" y="180">g</text>
+<circle class="nd" cx="110" cy="180" r="16"/><text x="110" y="180">h</text>
+<circle class="nd" cx="170" cy="110" r="16"/><text x="170" y="110">i</text>
+</svg>
+          <figcaption>Green edges: the MST Kruskal picks. Weight 37 — same as Prim's, but it uses a–h instead of b–c (both weigh 8).</figcaption>
+        </figure>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p>Prim grows one tree. Kruskal grows a <strong>forest</strong>: start with every vertex as its own tiny tree, then look at edges from <strong>cheapest to most expensive</strong>. Take an edge if it joins <strong>two different trees</strong>; skip it if both ends are already in the same tree (it would make a cycle).</p>
+          <p>Why safe? The cheapest edge joining two different trees is the lightest edge crossing the cut "this tree vs everything else" — by the cut property it belongs to some MST.</p>
+          <p>To test "same tree?" quickly we use a <strong>Disjoint Set Union (union-find)</strong>: <code>FIND(x)</code> returns the representative of x's tree, <code>UNION(x, y)</code> merges two trees.</p>
+        </div>
+      </section>
+
+      <section class="section" id="technique" data-toc="Technique">
+        <h2>Solution technique</h2>
+        <div class="dry">
+          <div class="d"><span>Make each vertex its own set (MAKE-SET).</span></div>
+          <div class="d"><span>Sort all edges in <strong>non-decreasing order of weight</strong>.</span></div>
+          <div class="d"><span>For each edge (u, v): if <code>FIND(u) ≠ FIND(v)</code>, add the edge to the MST and <code>UNION(u, v)</code>; otherwise discard it.</span></div>
+          <div class="d"><span>Stop after V − 1 edges are taken.</span></div>
+        </div>
+<script type="text/plain" data-clrs>
+MST-KRUSKAL(G, w)
+    A = ∅
+    for each vertex v ∈ G.V
+        MAKE-SET(v)
+    sort the edges of G.E into nondecreasing order by weight w
+    for each edge (u, v) ∈ G.E, taken in that order
+        if FIND-SET(u) ≠ FIND-SET(v)
+            A = A ∪ {(u, v)}
+            UNION(u, v)
+    return A
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+struct DSU {
+    vector<int> p, r;
+    DSU(int n) : p(n), r(n, 0) { iota(p.begin(), p.end(), 0); }
+    int find(int x) { return p[x] == x ? x : p[x] = find(p[x]); }   // path compression
+    bool unite(int a, int b) {
+        a = find(a); b = find(b);
+        if (a == b) return false;                // same tree -> cycle
+        if (r[a] < r[b]) swap(a, b);
+        p[b] = a;
+        if (r[a] == r[b]) r[a]++;                // union by rank
+        return true;
+    }
+};
+
+// edges: {w, u, v}
+long long kruskal(int n, vector<array<int, 3>>& edges) {
+    sort(edges.begin(), edges.end());
+    DSU d(n);
+    long long total = 0;
+    int taken = 0;
+    for (auto [w, u, v] : edges)
+        if (d.unite(u, v)) {
+            total += w;
+            if (++taken == n - 1) break;
+        }
+    return total;
+}
+</script>
+<script type="text/plain" data-lang="java">
+static int[] parent, rnk;
+static int find(int x) { return parent[x] == x ? x : (parent[x] = find(parent[x])); }
+static boolean unite(int a, int b) {
+    a = find(a); b = find(b);
+    if (a == b) return false;
+    if (rnk[a] < rnk[b]) { int t = a; a = b; b = t; }
+    parent[b] = a;
+    if (rnk[a] == rnk[b]) rnk[a]++;
+    return true;
+}
+
+// edges[i] = {w, u, v}
+static long kruskal(int n, int[][] edges) {
+    Arrays.sort(edges, (x, y) -> Integer.compare(x[0], y[0]));
+    parent = new int[n]; rnk = new int[n];
+    for (int i = 0; i < n; i++) parent[i] = i;
+    long total = 0;
+    int taken = 0;
+    for (int[] e : edges)
+        if (unite(e[1], e[2])) {
+            total += e[0];
+            if (++taken == n - 1) break;
+        }
+    return total;
+}
+</script>
+<script type="text/plain" data-lang="python">
+def kruskal(vertices, edges):
+    # edges: list of (u, v, w)
+    parent = {v: v for v in vertices}
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]   # path halving
+            x = parent[x]
+        return x
+
+    total, mst = 0, []
+    for u, v, w in sorted(edges, key=lambda e: e[2]):
+        ru, rv = find(u), find(v)
+        if ru != rv:                        # different trees -> no cycle
+            parent[ru] = rv
+            total += w
+            mst.append((u, v, w))
+    return total, mst
+</script>
+        </div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example</h2>
+        <p class="muted">Edges sorted by weight. "Same tree?" is answered by FIND.</p>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Edge</th><th>Weight</th><th>Same tree?</th><th>Decision</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr><td>g–h</td><td>1</td><td>no</td><td class="hl">take</td><td>1</td></tr>
+              <tr><td>c–i</td><td>2</td><td>no</td><td class="hl">take</td><td>3</td></tr>
+              <tr><td>f–g</td><td>2</td><td>no</td><td class="hl">take</td><td>5</td></tr>
+              <tr><td>a–b</td><td>4</td><td>no</td><td class="hl">take</td><td>9</td></tr>
+              <tr><td>c–f</td><td>4</td><td>no</td><td class="hl">take</td><td>13</td></tr>
+              <tr><td>g–i</td><td>6</td><td>yes (g–f–c–i)</td><td class="x">skip</td><td>13</td></tr>
+              <tr><td>c–d</td><td>7</td><td>no</td><td class="hl">take</td><td>20</td></tr>
+              <tr><td>h–i</td><td>7</td><td>yes</td><td class="x">skip</td><td>20</td></tr>
+              <tr><td>a–h</td><td>8</td><td>no</td><td class="hl">take</td><td>28</td></tr>
+              <tr><td>b–c</td><td>8</td><td>yes (now joined through a–h)</td><td class="x">skip</td><td>28</td></tr>
+              <tr><td>d–e</td><td>9</td><td>no</td><td class="hl">take</td><td class="hl">37</td></tr>
+              <tr><td>e–f, b–h, d–f</td><td>10, 11, 14</td><td>—</td><td class="x">not needed (8 edges taken)</td><td>37</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2"><strong>MST weight = 37.</strong></p>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">Graph: 0–3 6, 0–4 5, 1–2 9, 1–3 5, 1–5 1, 1–6 9, 2–6 7, 3–7 9, 4–6 4, 5–7 2, 6–7 7. Run Kruskal.</span></summary>
+          <div class="ans"><p>Take 1–5 (1), 5–7 (2), 4–6 (4), 0–4 (5), 1–3 (5), 0–3 (6), 2–6 (7). Skip 6–7, 1–2, 1–6, 3–7 (cycles).</p>
+            <p><strong>MST weight = 30</strong> — same as Prim from vertex 3.</p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">Prim or Kruskal — which to use?</span></summary>
+          <div class="ans"><p>Kruskal is simple and fast for <strong>sparse</strong> graphs given as an edge list. Prim with an array is better for <strong>dense</strong> graphs (O(V²) without sorting E ≈ V² edges).</p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">How do you detect that the graph is disconnected?</span></summary>
+          <div class="ans"><p>After processing all edges, fewer than V − 1 edges were taken.</p></div></details>
+        <details class="ex"><summary><span class="qn">P4</span><span class="q">Group n points into k clusters so the minimum distance between clusters is as large as possible.</span></summary>
+          <div class="ans"><p>Run Kruskal and stop when exactly k trees remain (after n − k unions). The next edge Kruskal would take is the answer.</p></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Must sort every edge.</strong> On dense graphs (E ≈ V²) the sort costs O(V² log V) — slower than Prim's O(V²).</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Needs a good union-find.</strong> Without path compression / union by rank, FIND can take O(V) and the algorithm becomes O(E·V).</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Undirected only</strong>, like Prim.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Step</th><th>Work</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td>MAKE-SET</td><td>V times</td><td>O(V)</td></tr>
+              <tr><td>Sort edges</td><td>comparison sort of E edges</td><td>O(E log E)</td></tr>
+              <tr><td>FIND-SET</td><td>2E times</td><td>O(E α(V))</td></tr>
+              <tr><td>UNION</td><td>V − 1 times</td><td>O(V α(V))</td></tr>
+              <tr><td><b>Total</b></td><td>sort dominates; log E ≤ log V² = 2 log V</td><td><b>O(E log E) = O(E log V)</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Time</span><span class="v">O(E log V)</span><span class="faint" style="font-size:.86rem">α(V) ≤ 4 in practice</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(V + E)</span><span class="faint" style="font-size:.86rem">edge list + parent / rank arrays</span></div>
+          <div class="kbox"><span class="k">Pre-sorted edges</span><span class="v">O(E α(V))</span><span class="faint" style="font-size:.86rem">almost linear</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/minimum-spanning-tree/1" target="_blank" rel="noopener">Minimum Spanning Tree</a></td><td><span class="chip medium">Medium</span></td><td>this page</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1675" target="_blank" rel="noopener">1675 · Road Reparation</a></td><td><span class="chip easy">Easy</span></td><td>Kruskal + connectivity check</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/connecting-cities-with-minimum-cost/" target="_blank" rel="noopener">1135. Connecting Cities With Minimum Cost</a></td><td><span class="chip medium">Medium</span></td><td>plain Kruskal (premium)</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/redundant-connection/" target="_blank" rel="noopener">684. Redundant Connection</a></td><td><span class="chip medium">Medium</span></td><td>union-find cycle detection</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="prim.html"><small>← Previous</small>06 · Prim's MST</a>
+          <a class="next" href="bellman-ford.html"><small>Next problem →</small>08 · Bellman–Ford</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

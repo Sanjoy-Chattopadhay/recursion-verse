@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Greedy Algorithms — RecursionVerse</title>
-  <meta name="description" content="Greedy algorithms: the idea, when it is safe, and five classic problems — Fractional Knapsack, Activity Selection, Job Sequencing, Huffman Coding and Dijkstra — with examples, code and complexity.">
+  <meta name="description" content="Greedy algorithms: the idea, when it is safe, and five classic problems — Fractional Knapsack, Activity Selection, Job Sequencing, Huffman Coding, Dijkstra, Prim, Kruskal, Bellman–Ford and Optimal Reliability Allocation — with examples, code and complexity.">
   <meta name="theme-color" content="#070913">
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +22,7 @@
       <div class="eyebrow">Track 4 · Greedy</div>
       <h1>Greedy Algorithms</h1>
       <p class="lede">At every step, take the best-looking option <em>right now</em> and never look back. Simple, fast — and correct only when the problem allows it.</p>
-      <div class="chips mt-1"><span class="chip pink">commit, never revisit</span><span class="chip">5 problems</span><span class="chip">examples + practice</span></div>
+      <div class="chips mt-1"><span class="chip pink">commit, never revisit</span><span class="chip">9 problems</span><span class="chip">examples + practice</span></div>
     </div>
   </section>
 
@@ -33,11 +33,15 @@
         <h2>Problems in this track</h2>
         <p class="muted">Each page has: problem statement, intuition, the greedy technique, worked examples, practice questions with answers, drawbacks and a detailed time-complexity breakdown.</p>
         <div class="problem-list mt-2">
-          <a href="fractional-knapsack.html"><span class="n">01</span><span class="t"><b>Fractional Knapsack</b><span>Fill a bag of capacity M to maximise profit; items can be cut.</span></span><span class="c">O(n log n)</span></a>
-          <a href="activity-selection.html"><span class="n">02</span><span class="t"><b>Activity Selection</b><span>Pick the most non-overlapping activities — sort by finish time.</span></span><span class="c">O(n log n)</span></a>
-          <a href="job-sequencing.html"><span class="n">03</span><span class="t"><b>Job Sequencing with Deadlines</b><span>Unit-time jobs with deadlines and profit / penalty.</span></span><span class="c">O(n²)</span></a>
-          <a href="huffman-coding.html"><span class="n">04</span><span class="t"><b>Huffman Coding</b><span>Optimal prefix codes for lossless compression using a min-heap.</span></span><span class="c">O(n log n)</span></a>
-          <a href="dijkstra.html"><span class="n">05</span><span class="t"><b>Dijkstra's Shortest Path</b><span>Single-source shortest paths with non-negative edge weights.</span></span><span class="c">O((V+E) log V)</span></a>
+          <a href="fractional-knapsack.html"><span class="n">01</span><span class="t"><b>Fractional Knapsack</b><span>Sort by profit / weight, cut the last item.</span></span><span class="c">O(n log n)</span></a>
+          <a href="activity-selection.html"><span class="n">02</span><span class="t"><b>Activity Selection</b><span>Earliest finish time first.</span></span><span class="c">O(n log n)</span></a>
+          <a href="job-sequencing.html"><span class="n">03</span><span class="t"><b>Job Sequencing with Deadlines</b><span>Highest profit first, latest free slot.</span></span><span class="c">O(n²)</span></a>
+          <a href="huffman-coding.html"><span class="n">04</span><span class="t"><b>Huffman Coding</b><span>Merge the two least frequent with a min-heap.</span></span><span class="c">O(n log n)</span></a>
+          <a href="dijkstra.html"><span class="n">05</span><span class="t"><b>Dijkstra's Shortest Path</b><span>Finalise the closest unvisited vertex.</span></span><span class="c">O((V+E) log V)</span></a>
+          <a href="prim.html"><span class="n">06</span><span class="t"><b>Minimum Spanning Tree — Prim's</b><span>Grow one tree by its cheapest outgoing edge.</span></span><span class="c">O(E log V)</span></a>
+          <a href="kruskal.html"><span class="n">07</span><span class="t"><b>Minimum Spanning Tree — Kruskal's</b><span>Cheapest edge that makes no cycle; union-find.</span></span><span class="c">O(E log V)</span></a>
+          <a href="bellman-ford.html"><span class="n">08</span><span class="t"><b>Bellman–Ford</b><span>Shortest paths with negative edges; cycle detection.</span></span><span class="c">O(V·E)</span></a>
+          <a href="reliability.html"><span class="n">09</span><span class="t"><b>Optimal Reliability Allocation</b><span>Add parallel devices with the best gain per cost.</span></span><span class="c">O(K·n)</span></a>
         </div>
       </section>
 
@@ -115,7 +119,7 @@ GREEDY(C)
       </section>
 
       <section class="section" id="summary" data-toc="Summary table">
-        <h2>Summary of the five problems</h2>
+        <h2>Summary of the problems</h2>
         <div class="table-wrap">
           <table class="table">
             <thead><tr><th>Problem</th><th>Greedy key</th><th>Data structure</th><th>Time</th><th>Space</th></tr></thead>
@@ -125,6 +129,10 @@ GREEDY(C)
               <tr><td><a href="job-sequencing.html"><b>Job Sequencing</b></a></td><td>highest profit first, latest free slot ≤ deadline</td><td>sort + slot array (or DSU)</td><td>O(n²) · O(n log n) with DSU</td><td>O(n)</td></tr>
               <tr><td><a href="huffman-coding.html"><b>Huffman Coding</b></a></td><td>merge the two least frequent</td><td>min-heap</td><td>O(n log n)</td><td>O(n)</td></tr>
               <tr><td><a href="dijkstra.html"><b>Dijkstra</b></a></td><td>closest unvisited vertex</td><td>min-heap</td><td>O((V + E) log V)</td><td>O(V)</td></tr>
+              <tr><td><a href="prim.html"><b>Prim's MST</b></a></td><td>cheapest edge leaving the tree</td><td>min-heap</td><td>O(E log V) · O(V²) array</td><td>O(V)</td></tr>
+              <tr><td><a href="kruskal.html"><b>Kruskal's MST</b></a></td><td>cheapest edge with no cycle</td><td>sort + union-find</td><td>O(E log V)</td><td>O(V + E)</td></tr>
+              <tr><td><a href="bellman-ford.html"><b>Bellman–Ford</b></a></td><td>(not greedy) relax all edges V − 1 times</td><td>edge list</td><td>O(V·E)</td><td>O(V)</td></tr>
+              <tr><td><a href="reliability.html"><b>Optimal Reliability Allocation</b></a></td><td>largest reliability gain per cost</td><td>—</td><td>O(K·n) (exact DP pseudo-poly)</td><td>O(n)</td></tr>
             </tbody>
           </table>
         </div>

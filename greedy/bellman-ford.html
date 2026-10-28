@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bellman–Ford Algorithm — Greedy · RecursionVerse</title>
+  <meta name="description" content="Bellman-Ford single-source shortest paths: relax every edge V-1 times, handles negative edges and detects negative cycles. Worked example, code, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="greedy"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Greedy</a><span>/</span><span>Bellman–Ford</span></div>
+      <div class="eyebrow">Problem 08 · relax everything, V − 1 times</div>
+      <h1>Bellman–Ford Algorithm</h1>
+      <div class="chips mt-1"><span class="chip medium">Medium</span><span class="chip pink">shortest paths</span><span class="chip">negative edges OK</span><span class="chip">O(V·E)</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/distance-from-the-source-bellman-ford-algorithm/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Bellman-Ford</a>
+        <a class="plink" href="https://cses.fi/problemset/task/1197" target="_blank" rel="noopener"><span class="dot dot-cses"></span>CSES 1197 · Cycle Finding</a>
+        <a class="plink" href="https://leetcode.com/problems/cheapest-flights-within-k-stops/" target="_blank" rel="noopener"><span class="dot dot-lc"></span>LeetCode 787</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <p class="problem-statement prose">Given a directed weighted graph whose edges <strong>may be negative</strong> and a source s, find the shortest distance from s to every vertex — <strong>or report that a negative-weight cycle is reachable from s</strong> (then shortest paths are not defined, because you could loop forever and keep decreasing the cost).</p>
+        <div class="callout info mt-2"><span class="ic">i</span><p>The syllabus lists Bellman–Ford with Dijkstra under single-source shortest paths. Strictly, Bellman–Ford is <strong>not greedy</strong> — it never commits to a vertex early. It is the fix for exactly the case where Dijkstra's greedy choice breaks: negative edges.</p></div>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p>A shortest path with no cycle visits at most V vertices, so it has at most <strong>V − 1 edges</strong>.</p>
+          <p>Relax <em>every</em> edge once: now every shortest path that uses 1 edge is correct. Relax every edge again: every shortest path with ≤ 2 edges is correct. After <strong>V − 1 rounds</strong>, every shortest path is correct — no matter in what order the edges were relaxed.</p>
+          <p>If after that some edge can <em>still</em> be relaxed, a distance is still dropping — the only way is a <strong>negative cycle</strong>.</p>
+        </div>
+      </section>
+
+      <section class="section" id="technique" data-toc="Technique">
+        <h2>Solution technique</h2>
+        <div class="dry">
+          <div class="d"><span>Set <code>d[s] = 0</code> and <code>d[v] = ∞</code> for every other vertex.</span></div>
+          <div class="d"><span>Repeat V − 1 times: for every edge (u, v, w), RELAX: if <code>d[u] + w &lt; d[v]</code> then <code>d[v] = d[u] + w</code>, <code>π[v] = u</code>.</span></div>
+          <div class="d"><span>One more pass over the edges: if any edge can still be relaxed, return "negative cycle".</span></div>
+          <div class="d"><span>(Optimisation) stop early if a whole pass changes nothing.</span></div>
+        </div>
+<script type="text/plain" data-clrs>
+BELLMAN-FORD(G, w, s)
+    INITIALIZE-SINGLE-SOURCE(G, s)
+    for i = 1 to |G.V| - 1
+        for each edge (u, v) ∈ G.E
+            RELAX(u, v, w)
+    for each edge (u, v) ∈ G.E
+        if v.d > u.d + w(u, v)
+            return FALSE   // negative-weight cycle
+    return TRUE
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+// edges: {u, v, w}; returns false if a negative cycle is reachable
+bool bellmanFord(int n, vector<array<int, 3>>& edges, int s, vector<long long>& dist) {
+    const long long INF = LLONG_MAX;
+    dist.assign(n, INF);
+    dist[s] = 0;
+    for (int i = 1; i <= n - 1; i++) {
+        bool changed = false;
+        for (auto [u, v, w] : edges)
+            if (dist[u] != INF && dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                changed = true;
+            }
+        if (!changed) break;              // early exit
+    }
+    for (auto [u, v, w] : edges)
+        if (dist[u] != INF && dist[u] + w < dist[v]) return false;
+    return true;
+}
+</script>
+<script type="text/plain" data-lang="java">
+static boolean bellmanFord(int n, int[][] edges, int s, long[] dist) {
+    Arrays.fill(dist, Long.MAX_VALUE);
+    dist[s] = 0;
+    for (int i = 1; i <= n - 1; i++) {
+        boolean changed = false;
+        for (int[] e : edges) {
+            int u = e[0], v = e[1], w = e[2];
+            if (dist[u] != Long.MAX_VALUE && dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                changed = true;
+            }
+        }
+        if (!changed) break;
+    }
+    for (int[] e : edges)
+        if (dist[e[0]] != Long.MAX_VALUE && dist[e[0]] + e[2] < dist[e[1]]) return false;
+    return true;
+}
+</script>
+<script type="text/plain" data-lang="python">
+def bellman_ford(vertices, edges, s):
+    # edges: list of (u, v, w)
+    dist = {v: float("inf") for v in vertices}
+    dist[s] = 0
+    for _ in range(len(vertices) - 1):
+        changed = False
+        for u, v, w in edges:
+            if dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                changed = True
+        if not changed:
+            break
+    for u, v, w in edges:
+        if dist[u] + w < dist[v]:
+            return None            # negative cycle
+    return dist
+</script>
+        </div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example (CLRS Fig. 24.4) — source s</h2>
+        <p class="muted">Edges, relaxed in this order every pass: t→x 5, t→y 8, t→z −4, x→t −2, y→x −3, y→z 9, z→x 7, z→s 2, s→t 6, s→y 7. V = 5, so 4 passes.</p>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>After pass</th><th>s</th><th>t</th><th>x</th><th>y</th><th>z</th><th>What changed</th></tr></thead>
+            <tbody>
+              <tr><td>start</td><td>0</td><td>∞</td><td>∞</td><td>∞</td><td>∞</td><td>—</td></tr>
+              <tr><td>1</td><td>0</td><td>6</td><td>∞</td><td>7</td><td>∞</td><td>s→t, s→y</td></tr>
+              <tr><td>2</td><td>0</td><td>6</td><td>4</td><td>7</td><td>2</td><td>t→z: 6−4 = 2 · y→x: 7−3 = 4</td></tr>
+              <tr><td>3</td><td>0</td><td class="hl">2</td><td>4</td><td>7</td><td>2</td><td>x→t: 4−2 = 2</td></tr>
+              <tr><td>4</td><td>0</td><td>2</td><td>4</td><td>7</td><td class="hl">−2</td><td>t→z: 2−4 = −2</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2">Check pass: no edge can be relaxed → no negative cycle. <strong>Final: s 0, t 2, x 4, y 7, z −2.</strong> Shortest path to z: s → y → x → t → z (7 − 3 − 2 − 4 = −2). Dijkstra would have finalised t = 6 too early.</p>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">A→B −1, A→C 4, B→C 3, B→D 2, B→E 2, D→B 1, D→C 5, E→D −3. Source A.</span></summary>
+          <div class="ans"><p>Pass 1 (in this edge order): B = −1, C = 4 → 2, D = 1, E = 1, then E→D gives D = −2. Later passes change nothing.</p>
+            <p><strong>Final: A 0, B −1, C 2, D −2, E 1.</strong> No negative cycle.</p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">A→B 1, B→C −2, C→B 1. Source A. What happens?</span></summary>
+          <div class="ans"><p>B→C→B has total weight −1: a negative cycle. After the 2 passes d = (A 0, B −1, C −2); in the check pass B→C still relaxes (−1 − 2 = −3 &lt; −2) — the distances would keep dropping forever. <strong>Bellman–Ford returns FALSE.</strong></p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">Why exactly V − 1 passes?</span></summary>
+          <div class="ans"><p>A shortest simple path has at most V − 1 edges, and after pass k all shortest paths with ≤ k edges are correct (the path-relaxation property).</p></div></details>
+        <details class="ex"><summary><span class="qn">P4</span><span class="q">LeetCode 787: cheapest flight with at most K stops. How does Bellman–Ford help?</span></summary>
+          <div class="ans"><p>Run exactly K + 1 passes, each time relaxing from a <em>copy</em> of the previous distances, so a pass can extend paths by only one edge.</p></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Slow.</strong> O(V·E) — on a dense graph that is O(V³). Use Dijkstra whenever all weights are non-negative.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>No answer with negative cycles.</strong> It can only report that one exists (reachable from s).</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Overflow:</strong> never add a weight to ∞; check <code>dist[u] != INF</code> first.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Step</th><th>Work</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td>Initialise</td><td>V assignments</td><td>Θ(V)</td></tr>
+              <tr><td>Main loop</td><td>(V − 1) passes × E relaxations, O(1) each</td><td>Θ(V·E)</td></tr>
+              <tr><td>Negative-cycle check</td><td>one pass over E edges</td><td>O(E)</td></tr>
+              <tr><td><b>Total</b></td><td></td><td><b>O(V·E)</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Worst / average</span><span class="v">O(V·E)</span><span class="faint" style="font-size:.86rem">O(V³) for dense graphs</span></div>
+          <div class="kbox"><span class="k">Best (early exit)</span><span class="v">O(E)</span><span class="faint" style="font-size:.86rem">when the first pass already settles everything</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(V)</span><span class="faint" style="font-size:.86rem">d and π arrays (+ edge list)</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/distance-from-the-source-bellman-ford-algorithm/1" target="_blank" rel="noopener">Bellman-Ford</a></td><td><span class="chip medium">Medium</span></td><td>this page</td></tr>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/negative-weight-cycle3504/1" target="_blank" rel="noopener">Negative weight cycle</a></td><td><span class="chip medium">Medium</span></td><td>the check pass</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/cheapest-flights-within-k-stops/" target="_blank" rel="noopener">787. Cheapest Flights Within K Stops</a></td><td><span class="chip medium">Medium</span></td><td>K + 1 passes</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1673" target="_blank" rel="noopener">1673 · High Score</a></td><td><span class="chip medium">Medium</span></td><td>longest path = negate weights</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1197" target="_blank" rel="noopener">1197 · Cycle Finding</a></td><td><span class="chip medium">Medium</span></td><td>print the negative cycle</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="kruskal.html"><small>← Previous</small>07 · Kruskal's MST</a>
+          <a class="next" href="reliability.html"><small>Next problem →</small>09 · Optimal Reliability Allocation</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

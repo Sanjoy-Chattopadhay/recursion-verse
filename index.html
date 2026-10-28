@@ -23,13 +23,13 @@
         <div>
           <div class="eyebrow">Choices + Decisions → Recursion</div>
           <h1>See every call.<br><span class="grad">Understand every choice.</span></h1>
-          <p class="lede">An interactive course on <strong>Recursion, Backtracking, Dynamic Programming and Greedy</strong>. Every problem comes with an animated state-space tree, a live call stack, a memory view, CLRS-style pseudocode and code in C++, Java and Python.</p>
+          <p class="lede">An interactive course on <strong>Recursion, Backtracking, Dynamic Programming, Greedy and Branch &amp; Bound</strong>. Every problem comes with an animated state-space tree, a live call stack, a memory view, CLRS-style pseudocode and code in C++, Java and Python.</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="backtracking/index.html">Start with Backtracking →</a>
             <a class="btn" href="#big-idea">The one big idea ↓</a>
           </div>
           <div class="stat-row">
-            <div class="stat"><b class="grad-text">9</b><span>worked problems</span></div>
+            <div class="stat"><b class="grad-text">20</b><span>worked problems</span></div>
             <div class="stat"><b class="grad-text">3</b><span>languages + CLRS</span></div>
             <div class="stat"><b class="grad-text">40+</b><span>practice links</span></div>
             <div class="stat"><b class="grad-text">1</b><span>template for all</span></div>
@@ -101,9 +101,9 @@
         <div class="section-head reveal">
           <div class="eyebrow">Tracks</div>
           <h2>Pick a track</h2>
-          <p>Backtracking and Greedy are live now. Click a track to see its problems; the other tracks are being written.</p>
+          <p>Every Unit III &amp; IV syllabus problem is here. Click a track to see its problems, or jump straight to the full list below.</p>
         </div>
-        <div class="grid grid-4">
+        <div class="grid grid-3">
           <a class="card card-link muted reveal" href="recursion.html">
             <div class="card-icon" style="background:var(--accent-2-soft);color:var(--accent-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v4M12 7l-5 5M12 7l5 5M7 12v4M17 12v4"/><circle cx="12" cy="3" r="1.5"/></svg></div>
             <div class="card-kicker">Track 1 <span class="chip">coming soon</span></div>
@@ -115,20 +115,28 @@
             <div class="card-kicker">Track 2 <span class="chip good" style="color:var(--good);background:var(--good-soft);border-color:transparent">live</span></div>
             <h3>Backtracking</h3>
             <p class="muted">Pass by reference + controlled recursion. One template, mapped onto every problem.</p>
-            <div class="card-foot"><span class="arrow-link">Open track →</span><span class="chip accent">4 problems</span></div>
+            <div class="card-foot"><span class="arrow-link">Open track →</span><span class="chip accent">6 problems</span></div>
           </a>
-          <a class="card card-link muted reveal" href="dp.html">
+          <a class="card card-link reveal" href="dp/index.html">
             <div class="card-icon" style="background:var(--amber-soft);color:var(--amber)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
-            <div class="card-kicker">Track 3 <span class="chip">coming soon</span></div>
+            <div class="card-kicker">Track 3 <span class="chip good" style="color:var(--good);background:var(--good-soft);border-color:transparent">live</span></div>
             <h3>Dynamic Programming</h3>
             <p class="muted">Overlapping sub-problems, memoisation, tabulation — the answer at the root.</p>
+            <div class="card-foot"><span class="arrow-link">Open track →</span><span class="chip amber">4 problems</span></div>
           </a>
           <a class="card card-link reveal" href="greedy/index.html">
             <div class="card-icon" style="background:var(--accent-3-soft);color:var(--accent-3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 18l6-6 4 4 6-8"/><path d="M15 8h5v5"/></svg></div>
             <div class="card-kicker">Track 4 <span class="chip good" style="color:var(--good);background:var(--good-soft);border-color:transparent">live</span></div>
             <h3>Greedy</h3>
             <p class="muted">When is the locally best choice globally safe — and when does it fail?</p>
-            <div class="card-foot"><span class="arrow-link">Open track →</span><span class="chip pink">5 problems</span></div>
+            <div class="card-foot"><span class="arrow-link">Open track →</span><span class="chip pink">9 problems</span></div>
+          </a>
+          <a class="card card-link reveal" href="branch-and-bound/index.html">
+            <div class="card-icon" style="background:var(--accent-2-soft);color:var(--accent-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v5M12 8l-6 6M12 8l6 6M6 14v4M18 14v4"/><path d="M15 17l6 4M21 17l-6 4"/></svg></div>
+            <div class="card-kicker">Track 5 <span class="chip good" style="color:var(--good);background:var(--good-soft);border-color:transparent">live</span></div>
+            <h3>Branch &amp; Bound</h3>
+            <p class="muted">Bound every node, expand the cheapest, kill subtrees that can't win.</p>
+            <div class="card-foot"><span class="arrow-link">Open track →</span><span class="chip cyan">1 problem</span></div>
           </a>
         </div>
       </div>
@@ -156,50 +164,49 @@
     <section class="section" id="problems">
       <div class="container">
         <div class="section-head reveal">
-          <div class="eyebrow">Backtracking · worked problems</div>
-          <h2>Start here</h2>
+          <div class="eyebrow">All problems · DAA syllabus Units III &amp; IV</div>
+          <h2>Every problem, by track</h2>
+          <p>Each page: statement, intuition, technique, CLRS pseudocode, C++ / Java / Python, worked examples, practice with answers, drawbacks and detailed time complexity.</p>
         </div>
-        <div class="grid grid-4">
-          <a class="card card-link pcard reveal" href="backtracking/permutations.html">
-            <div class="card-kicker"><span class="num">01</span> strings</div>
-            <h3>All Permutations</h3>
-            <p class="muted">Two ways: input/output copies vs swapping in place — and how to kill duplicates.</p>
-            <div class="meta"><span class="chip medium">Medium</span><span class="chip">O(n·n!)</span></div>
-          </a>
-          <a class="card card-link pcard reveal" href="backtracking/k-swaps.html">
-            <div class="card-kicker"><span class="num">02</span> greedy trap</div>
-            <h3>Largest Number in K Swaps</h3>
-            <p class="muted">Why greedy fails on duplicate digits (4577 → 7754, not 7745).</p>
-            <div class="meta"><span class="chip medium">Medium</span><span class="chip">don't be greedy</span></div>
-          </a>
-          <a class="card card-link pcard reveal" href="backtracking/hamiltonian-cycle.html">
-            <div class="card-kicker"><span class="num">03</span> graphs</div>
-            <h3>Hamiltonian Cycle</h3>
-            <p class="muted">Visit every vertex once and come home. Path + visited[] by reference.</p>
-            <div class="meta"><span class="chip hard">Hard</span><span class="chip">O(n!)</span></div>
-          </a>
-          <a class="card card-link pcard reveal" href="backtracking/graph-coloring.html">
-            <div class="card-kicker"><span class="num">04</span> graphs</div>
-            <h3>Graph Colouring (m-colouring)</h3>
-            <p class="muted">Assign colours so no edge joins two equal colours — isSafe() in action.</p>
-            <div class="meta"><span class="chip medium">Medium</span><span class="chip">O(m^V · V)</span></div>
-          </a>
+        <div class="mt-3 reveal">
+          <div class="flex wrap gap-2 items-center" style="justify-content:space-between"><h3 class="mb-0"><a href="backtracking/index.html">Backtracking</a></h3><span class="chip accent">6 problems</span></div>
+          <div class="problem-list mt-2">
+          <a href="backtracking/permutations.html"><span class="n">01</span><span class="t"><b>All Possible Permutations</b><span>Input/output copies vs swapping in place; de-duplication.</span></span><span class="c">O(n·n!)</span></a>
+          <a href="backtracking/k-swaps.html"><span class="n">02</span><span class="t"><b>Largest Number in K Swaps</b><span>Why greedy fails on repeated digits.</span></span><span class="c">O(n^k · n)</span></a>
+          <a href="backtracking/hamiltonian-cycle.html"><span class="n">03</span><span class="t"><b>Hamiltonian Cycle</b><span>Visit every vertex once and return; path + visited[].</span></span><span class="c">O(n!)</span></a>
+          <a href="backtracking/graph-coloring.html"><span class="n">04</span><span class="t"><b>Graph Colouring (m-colouring)</b><span>No edge joins two equal colours; isSafe().</span></span><span class="c">O(m^V · V)</span></a>
+          <a href="backtracking/n-queens.html"><span class="n">05</span><span class="t"><b>n-Queen Problem</b><span>One queen per row; column and diagonal checks.</span></span><span class="c">O(n!)</span></a>
+          <a href="backtracking/sum-of-subsets.html"><span class="n">06</span><span class="t"><b>Sum of Subsets</b><span>Include / exclude with two pruning bounds.</span></span><span class="c">O(2ⁿ)</span></a>
+          </div>
         </div>
-      </div>
-    </section>
-
-    <section class="section" id="greedy-problems">
-      <div class="container">
-        <div class="section-head reveal">
-          <div class="eyebrow">Greedy · worked problems</div>
-          <h2>Five classic greedy problems</h2>
-        </div>
-        <div class="problem-list reveal">
+        <div class="mt-3 reveal">
+          <div class="flex wrap gap-2 items-center" style="justify-content:space-between"><h3 class="mb-0"><a href="greedy/index.html">Greedy</a></h3><span class="chip pink">9 problems</span></div>
+          <div class="problem-list mt-2">
           <a href="greedy/fractional-knapsack.html"><span class="n">01</span><span class="t"><b>Fractional Knapsack</b><span>Sort by profit / weight, cut the last item.</span></span><span class="c">O(n log n)</span></a>
           <a href="greedy/activity-selection.html"><span class="n">02</span><span class="t"><b>Activity Selection</b><span>Earliest finish time first.</span></span><span class="c">O(n log n)</span></a>
           <a href="greedy/job-sequencing.html"><span class="n">03</span><span class="t"><b>Job Sequencing with Deadlines</b><span>Highest profit first, latest free slot.</span></span><span class="c">O(n²)</span></a>
           <a href="greedy/huffman-coding.html"><span class="n">04</span><span class="t"><b>Huffman Coding</b><span>Merge the two least frequent with a min-heap.</span></span><span class="c">O(n log n)</span></a>
           <a href="greedy/dijkstra.html"><span class="n">05</span><span class="t"><b>Dijkstra's Shortest Path</b><span>Finalise the closest unvisited vertex.</span></span><span class="c">O((V+E) log V)</span></a>
+          <a href="greedy/prim.html"><span class="n">06</span><span class="t"><b>Minimum Spanning Tree — Prim's</b><span>Grow one tree by its cheapest outgoing edge.</span></span><span class="c">O(E log V)</span></a>
+          <a href="greedy/kruskal.html"><span class="n">07</span><span class="t"><b>Minimum Spanning Tree — Kruskal's</b><span>Cheapest edge that makes no cycle; union-find.</span></span><span class="c">O(E log V)</span></a>
+          <a href="greedy/bellman-ford.html"><span class="n">08</span><span class="t"><b>Bellman–Ford</b><span>Shortest paths with negative edges; cycle detection.</span></span><span class="c">O(V·E)</span></a>
+          <a href="greedy/reliability.html"><span class="n">09</span><span class="t"><b>Optimal Reliability Allocation</b><span>Add parallel devices with the best gain per cost.</span></span><span class="c">O(K·n)</span></a>
+          </div>
+        </div>
+        <div class="mt-3 reveal">
+          <div class="flex wrap gap-2 items-center" style="justify-content:space-between"><h3 class="mb-0"><a href="dp/index.html">Dynamic Programming</a></h3><span class="chip amber">4 problems</span></div>
+          <div class="problem-list mt-2">
+          <a href="dp/knapsack-01.html"><span class="n">01</span><span class="t"><b>0/1 Knapsack</b><span>Take an item whole or not at all.</span></span><span class="c">O(n·W)</span></a>
+          <a href="dp/floyd-warshall.html"><span class="n">02</span><span class="t"><b>All-Pairs Shortest Paths — Floyd's</b><span>Intermediate vertices 1..k, one k at a time.</span></span><span class="c">O(V³)</span></a>
+          <a href="dp/warshall.html"><span class="n">03</span><span class="t"><b>Transitive Closure — Warshall's</b><span>Which vertex can reach which?</span></span><span class="c">O(V³)</span></a>
+          <a href="dp/resource-allocation.html"><span class="n">04</span><span class="t"><b>Resource Allocation Problem</b><span>Split N units among projects for maximum profit.</span></span><span class="c">O(m·N²)</span></a>
+          </div>
+        </div>
+        <div class="mt-3 reveal">
+          <div class="flex wrap gap-2 items-center" style="justify-content:space-between"><h3 class="mb-0"><a href="branch-and-bound/index.html">Branch &amp; Bound</a></h3><span class="chip cyan">1 problem</span></div>
+          <div class="problem-list mt-2">
+          <a href="branch-and-bound/tsp.html"><span class="n">01</span><span class="t"><b>Travelling Salesman Problem</b><span>Least-cost branch and bound with reduced matrices.</span></span><span class="c">O(n²·n!)</span></a>
+          </div>
         </div>
       </div>
     </section>

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Branch and Bound — RecursionVerse</title>
+  <meta name="description" content="Branch and bound: explore the state-space tree with live nodes, bounds and least-cost search. Concepts and the Travelling Salesman Problem worked step by step.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="bnb"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><span>Branch and Bound</span></div>
+      <div class="eyebrow">Track 5 · Branch and Bound</div>
+      <h1>Branch and Bound</h1>
+      <p class="lede">Explore the same state-space tree as backtracking, but use a <em>bound</em> on every node to throw away whole subtrees that cannot beat the best answer found so far.</p>
+      <div class="chips mt-1"><span class="chip cyan">bound, then branch</span><span class="chip">optimisation problems</span></div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problems" data-toc="Problems">
+        <h2>Problems in this track</h2>
+        <div class="problem-list mt-2">
+          <a href="tsp.html"><span class="n">01</span><span class="t"><b>Travelling Salesman Problem</b><span>Least-cost branch and bound with reduced cost matrices.</span></span><span class="c">O(n²·n!) worst</span></a>
+        </div>
+        <p class="muted mt-2">Related: the same state-space trees appear in <a href="../backtracking/index.html">Backtracking</a> (n-Queen, Sum of Subsets, Graph Colouring, Hamiltonian Cycle) and <a href="../dp/knapsack-01.html">0/1 Knapsack</a> can also be solved by branch and bound.</p>
+      </section>
+
+      <section class="section" id="what" data-toc="What is it?">
+        <h2>What is branch and bound?</h2>
+        <div class="prose">
+          <p>Branch and bound (B&amp;B) is a method for <strong>optimisation problems</strong> (minimise cost / maximise profit) whose solutions form a state-space tree.</p>
+          <ul>
+            <li><strong>Branch:</strong> generate all children of a node (each child is one more decision).</li>
+            <li><strong>Bound:</strong> for every node compute a number <code>ĉ(node)</code> that is a <strong>lower bound</strong> on the cost of any solution in its subtree (for minimisation).</li>
+            <li><strong>Prune:</strong> if <code>ĉ(node) ≥ upper</code>, where <code>upper</code> is the cost of the best complete solution found so far, that whole subtree is <strong>killed</strong> — it cannot contain anything better.</li>
+          </ul>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Live node</span><span class="v">generated</span><span class="faint" style="font-size:.86rem">children not yet all generated</span></div>
+          <div class="kbox"><span class="k">E-node</span><span class="v">being expanded</span><span class="faint" style="font-size:.86rem">the node whose children we are generating now</span></div>
+          <div class="kbox"><span class="k">Dead node</span><span class="v">killed / done</span><span class="faint" style="font-size:.86rem">bounded out, infeasible, or fully expanded</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="search" data-toc="FIFO, LIFO, LC">
+        <h2>Which live node to expand next?</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Strategy</th><th>Live-node list</th><th>Behaves like</th></tr></thead>
+            <tbody>
+              <tr><td><b>FIFO B&amp;B</b></td><td>queue</td><td>breadth-first search</td></tr>
+              <tr><td><b>LIFO B&amp;B</b></td><td>stack</td><td>depth-first search</td></tr>
+              <tr><td><b>LC (least-cost) B&amp;B</b></td><td>min-heap on ĉ</td><td>always expand the most promising node — usually reaches the optimum fastest</td></tr>
+            </tbody>
+          </table>
+        </div>
+<script type="text/plain" data-clrs>
+LC-BRANCH-AND-BOUND(root)
+    upper = ∞
+    Q = {root}   // min-priority queue on the bound c(x)
+    while Q ≠ ∅
+        E = EXTRACT-MIN(Q)   // the E-node
+        if c(E) ≥ upper
+            continue   // bounded: kill it
+        if E is a complete solution
+            upper = cost(E)
+            best = E
+        else for each child X of E
+            if X is feasible and c(X) < upper
+                INSERT(Q, X)
+    return best
+</script>
+      </section>
+
+      <section class="section" id="compare" data-toc="B&B vs Backtracking">
+        <h2>Branch and bound vs backtracking</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th></th><th>Backtracking</th><th>Branch and Bound</th></tr></thead>
+            <tbody>
+              <tr><td>Used for</td><td>decision / "find all" problems (n-Queen, sum of subsets)</td><td>optimisation problems (TSP, 0/1 knapsack)</td></tr>
+              <tr><td>Search order</td><td>always depth-first</td><td>BFS, DFS or least-cost first</td></tr>
+              <tr><td>Kills a node when</td><td>it violates a constraint</td><td>it violates a constraint <em>or</em> its bound can't beat the best so far</td></tr>
+              <tr><td>Memory</td><td>O(depth)</td><td>can be large — many live nodes stored</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn mt-2"><span class="ic">!</span><p>Worst-case time is still exponential. B&amp;B is only as good as its bound — a tight, cheap-to-compute bound is the whole art.</p></div>
+        <div class="pager">
+          <a href="../index.html"><small>← Back</small>Home</a>
+          <a class="next" href="tsp.html"><small>Start →</small>01 · Travelling Salesman</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

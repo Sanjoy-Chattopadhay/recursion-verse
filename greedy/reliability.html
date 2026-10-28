@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Optimal Reliability Allocation — Greedy · RecursionVerse</title>
+  <meta name="description" content="Optimal reliability allocation (reliability design): add redundant devices to the stage with the best reliability gain per cost. Worked example, greedy vs exact DP, code, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="greedy"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Greedy</a><span>/</span><span>Optimal Reliability Allocation</span></div>
+      <div class="eyebrow">Problem 09 · best gain per rupee</div>
+      <h1>Optimal Reliability Allocation</h1>
+      <div class="chips mt-1"><span class="chip medium">Medium</span><span class="chip pink">greedy heuristic</span><span class="chip amber">exact: DP</span><span class="chip">O(K·n)</span></div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <div class="prose">
+          <p class="problem-statement">A system is made of <strong>n stages connected in series</strong>; stage i uses device D<sub>i</sub> with cost <code>c[i]</code> and reliability <code>r[i]</code> (probability it works). The system works only if <strong>every</strong> stage works, so its reliability is the product of the stage reliabilities.</p>
+          <p>To make a stage more reliable we can put <strong>m<sub>i</sub> copies of D<sub>i</sub> in parallel</strong> — the stage fails only if all copies fail:</p>
+          <p><code>φ<sub>i</sub>(m<sub>i</sub>) = 1 − (1 − r[i])<sup>m<sub>i</sub></sup></code> &nbsp;&nbsp; and &nbsp;&nbsp; <code>R = Π φ<sub>i</sub>(m<sub>i</sub>)</code></p>
+          <p>Given a total budget <strong>C</strong>, choose m<sub>1</sub>, …, m<sub>n</sub> ≥ 1 with <code>Σ c[i]·m<sub>i</sub> ≤ C</code> to <strong>maximise R</strong>.</p>
+        </div>
+        <div class="example mt-2"><span class="k">devices </span>D1, D2, D3
+<span class="k">cost    </span>30, 15, 20        <span class="k">budget C = </span>105
+<span class="k">r       </span>0.9, 0.8, 0.5
+<span class="k">out     </span><span class="o">m = (1, 2, 2), R = 0.9 × 0.96 × 0.75 = 0.648</span></div>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p>A chain is only as strong as its weakest link. Every stage needs at least one device, so first buy <strong>one copy of each</strong>. With the money left, keep buying <strong>one more copy</strong> for the stage that gives the <strong>largest increase in system reliability per unit cost</strong>:</p>
+          <p><code>gain(i) = (R with one more D<sub>i</sub> − R now) / c[i]</code></p>
+          <p>Stop when no extra device fits in the remaining budget. Usually the weakest (lowest reliability) and cheapest stages get the extra copies — exactly what an engineer would do by hand.</p>
+        </div>
+        <div class="callout warn mt-2"><span class="ic">!</span><p>This greedy is a <strong>heuristic</strong>: fast and usually optimal, but not always (see Drawbacks). Horowitz–Sahni solve the problem exactly with <strong>dynamic programming</strong> ("reliability design"), shown below for comparison.</p></div>
+      </section>
+
+      <section class="section" id="technique" data-toc="Technique">
+        <h2>Solution technique</h2>
+        <div class="dry">
+          <div class="d"><span>Set <code>m[i] = 1</code> for every stage; remaining budget <code>B = C − Σ c[i]</code> (if negative, no solution).</span></div>
+          <div class="d"><span>For every stage i with <code>c[i] ≤ B</code>, compute <code>gain(i)</code>.</span></div>
+          <div class="d"><span>Add one copy to the stage with the largest gain; <code>B = B − c[i]</code>.</span></div>
+          <div class="d"><span>Repeat until no stage fits in B.</span></div>
+        </div>
+<script type="text/plain" data-clrs>
+GREEDY-RELIABILITY(c, r, C)
+    n = c.length
+    for i = 1 to n
+        m[i] = 1
+    B = C - (c[1] + c[2] + … + c[n])
+    repeat
+        best = NIL
+        for i = 1 to n
+            if c[i] ≤ B and (best == NIL or GAIN(i) > GAIN(best))
+                best = i
+        if best ≠ NIL
+            m[best] = m[best] + 1
+            B = B - c[best]
+    until best == NIL
+    return m
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+double stageRel(double r, int m) { return 1 - pow(1 - r, m); }
+
+double systemRel(vector<double>& r, vector<int>& m) {
+    double R = 1;
+    for (int i = 0; i < (int)r.size(); i++) R *= stageRel(r[i], m[i]);
+    return R;
+}
+
+vector<int> greedyReliability(vector<int>& c, vector<double>& r, int C) {
+    int n = c.size();
+    vector<int> m(n, 1);
+    int B = C - accumulate(c.begin(), c.end(), 0);
+    while (true) {
+        int best = -1;
+        double bestGain = -1, now = systemRel(r, m);
+        for (int i = 0; i < n; i++) {
+            if (c[i] > B) continue;
+            m[i]++;
+            double gain = (systemRel(r, m) - now) / c[i];
+            m[i]--;
+            if (gain > bestGain) { bestGain = gain; best = i; }
+        }
+        if (best == -1) break;
+        m[best]++;
+        B -= c[best];
+    }
+    return m;
+}
+</script>
+<script type="text/plain" data-lang="java">
+static double systemRel(double[] r, int[] m) {
+    double R = 1;
+    for (int i = 0; i < r.length; i++) R *= 1 - Math.pow(1 - r[i], m[i]);
+    return R;
+}
+
+static int[] greedyReliability(int[] c, double[] r, int C) {
+    int n = c.length;
+    int[] m = new int[n];
+    Arrays.fill(m, 1);
+    int B = C;
+    for (int x : c) B -= x;
+    while (true) {
+        int best = -1;
+        double bestGain = -1, now = systemRel(r, m);
+        for (int i = 0; i < n; i++) {
+            if (c[i] > B) continue;
+            m[i]++;
+            double gain = (systemRel(r, m) - now) / c[i];
+            m[i]--;
+            if (gain > bestGain) { bestGain = gain; best = i; }
+        }
+        if (best == -1) break;
+        m[best]++;
+        B -= c[best];
+    }
+    return m;
+}
+</script>
+<script type="text/plain" data-lang="python">
+from math import prod
+
+def system_rel(r, m):
+    return prod(1 - (1 - ri) ** mi for ri, mi in zip(r, m))
+
+def greedy_reliability(c, r, C):
+    m = [1] * len(c)
+    B = C - sum(c)
+    while True:
+        now, best, best_gain = system_rel(r, m), None, -1
+        for i in range(len(c)):
+            if c[i] <= B:
+                m[i] += 1
+                gain = (system_rel(r, m) - now) / c[i]
+                m[i] -= 1
+                if gain > best_gain:
+                    best, best_gain = i, gain
+        if best is None:
+            return m, system_rel(r, m)
+        m[best] += 1
+        B -= c[best]
+
+print(greedy_reliability([30, 15, 20], [0.9, 0.8, 0.5], 105))  # ([1, 2, 2], 0.648)
+</script>
+        </div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example — C = 105</h2>
+        <p class="muted">One copy of each costs 30 + 15 + 20 = 65, so B = 40 and R = 0.9 × 0.8 × 0.5 = 0.36.</p>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Round</th><th>Option</th><th>New R</th><th>Gain / cost</th><th>Decision</th><th>B left</th></tr></thead>
+            <tbody>
+              <tr><td rowspan="3">1</td><td>+D1 (30)</td><td>0.99 × 0.8 × 0.5 = 0.396</td><td>0.036 / 30 = 0.0012</td><td></td><td rowspan="3">40 → 20</td></tr>
+              <tr><td>+D2 (15)</td><td>0.9 × 0.96 × 0.5 = 0.432</td><td>0.072 / 15 = 0.0048</td><td></td></tr>
+              <tr><td>+D3 (20)</td><td>0.9 × 0.8 × 0.75 = 0.540</td><td>0.180 / 20 = 0.0090</td><td class="hl">add D3</td></tr>
+              <tr><td rowspan="3">2</td><td>+D1 (30)</td><td>—</td><td>30 &gt; 20, doesn't fit</td><td></td><td rowspan="3">20 → 5</td></tr>
+              <tr><td>+D2 (15)</td><td>0.9 × 0.96 × 0.75 = 0.648</td><td>0.108 / 15 = 0.0072</td><td class="hl">add D2</td></tr>
+              <tr><td>+D3 (20)</td><td>0.9 × 0.8 × 0.875 = 0.630</td><td>0.090 / 20 = 0.0045</td><td></td></tr>
+              <tr><td>3</td><td colspan="4">B = 5 — nothing fits, stop</td><td>5</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2"><strong>Answer: m = (1, 2, 2), cost 100, R = 0.648.</strong> The exact DP below confirms 0.648 is optimal for this instance.</p>
+
+        <h3 class="mt-3">Exact method (dynamic programming)</h3>
+        <div class="prose">
+          <p>Each stage needs at least one device, so stage i can have at most <code>u<sub>i</sub> = ⌊(C − Σc + c[i]) / c[i]⌋</code> copies. Here u = (2, 3, 3). Let <code>f<sub>i</sub>(x)</code> = best reliability of stages 1..i using cost ≤ x:</p>
+          <p><code>f<sub>i</sub>(x) = max over 1 ≤ m ≤ u<sub>i</sub> of φ<sub>i</sub>(m) · f<sub>i−1</sub>(x − c[i]·m)</code>, &nbsp; <code>f<sub>0</sub>(x) = 1</code>.</p>
+          <p>Of the 2 × 3 × 3 = 18 combinations, checking those that fit the budget gives the best (1, 2, 2) with 0.648; the runner-up (1, 1, 3), cost 105, gives 0.9 × 0.8 × 0.875 = 0.63.</p>
+        </div>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">A stage has a device with r = 0.6. How many parallel copies make the stage at least 0.95 reliable?</span></summary>
+          <div class="ans"><p>Need 1 − 0.4<sup>m</sup> ≥ 0.95 → 0.4<sup>m</sup> ≤ 0.05. 0.4<sup>3</sup> = 0.064, 0.4<sup>4</sup> = 0.0256. <strong>m = 4</strong>.</p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">c = (30, 15, 20), r = (0.5, 0.7, 0.9), C = 95. Run the greedy, then check the optimum.</span></summary>
+          <div class="ans"><p>Base cost 65, B = 30, R = 0.315. Gains: +D1 → 0.4725 (0.00525/unit), +D2 → 0.4095 (0.0063/unit), +D3 → 0.3465. Greedy adds D2 (B = 15), then D2 again → m = (1, 3, 1), <strong>R = 0.4379</strong>.</p>
+            <p>But m = (2, 1, 1), cost 95, gives <strong>R = 0.75 × 0.7 × 0.9 = 0.4725</strong> — better. Greedy fails here: buying the cheap D2 left too little money for the expensive but most useful D1.</p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">Why can't we simply use the profit/weight greedy of fractional knapsack?</span></summary>
+          <div class="ans"><p>Devices are indivisible (0/1-type decisions) and the objective is a <em>product</em> with diminishing returns — each extra copy of the same device adds less than the previous one.</p></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Not always optimal</strong> (P2). Like 0/1 knapsack, indivisible purchases can leave budget unused. Use the DP for an exact answer.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Assumes independent failures.</strong> Parallel copies that share a power supply or a design bug fail together, and the formula overestimates reliability.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Only one constraint (cost).</strong> Real designs also limit weight, volume or power.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Step</th><th>Work</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td>Buy one of each</td><td>sum of costs</td><td>O(n)</td></tr>
+              <tr><td>One greedy round</td><td>try n stages; each new R computed in O(1) by updating one factor (O(n) if recomputed naively)</td><td>O(n) (or O(n²) naive)</td></tr>
+              <tr><td>Number of rounds</td><td>K = devices added ≤ B / min c[i]</td><td>K</td></tr>
+              <tr><td><b>Greedy total</b></td><td></td><td><b>O(K·n)</b></td></tr>
+              <tr><td>Exact DP</td><td>n stages × C budget values × u<sub>i</sub> choices</td><td>O(C · Σ u<sub>i</sub>) — pseudo-polynomial</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Greedy time</span><span class="v">O(K·n)</span><span class="faint" style="font-size:.86rem">K = extra devices bought</span></div>
+          <div class="kbox"><span class="k">DP time</span><span class="v">O(C·Σu<sub>i</sub>)</span><span class="faint" style="font-size:.86rem">exact, depends on the budget value</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(n)</span><span class="faint" style="font-size:.86rem">greedy; DP needs O(n·C)</span></div>
+        </div>
+        <div class="pager">
+          <a href="bellman-ford.html"><small>← Previous</small>08 · Bellman–Ford</a>
+          <a class="next" href="index.html"><small>Back to →</small>Greedy overview</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

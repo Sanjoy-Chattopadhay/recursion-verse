@@ -31,8 +31,9 @@
     { id: 'home', label: 'Home', href: 'index.html' },
     { id: 'recursion', label: 'Recursion', href: 'recursion.html', soon: true },
     { id: 'backtracking', label: 'Backtracking', href: 'backtracking/index.html' },
-    { id: 'dp', label: 'Dynamic Programming', short: 'DP', href: 'dp.html', soon: true },
+    { id: 'dp', label: 'Dynamic Programming', short: 'DP', href: 'dp/index.html' },
     { id: 'greedy', label: 'Greedy', href: 'greedy/index.html' },
+    { id: 'bnb', label: 'Branch & Bound', short: 'B&B', href: 'branch-and-bound/index.html' },
   ];
   const LOGO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2.2"/><circle cx="5.5" cy="13" r="2.2"/><circle cx="18.5" cy="13" r="2.2"/><circle cx="9" cy="20" r="1.8"/><path d="M11 6.3 6.8 11.2M13 6.3l4.2 4.9M6.3 15.1 8.3 18.3"/></svg>';
   const MOON = '<svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
@@ -43,7 +44,7 @@
     if (!host) return;
     const base = host.dataset.base || '';
     const active = host.dataset.active || '';
-    const wide = window.matchMedia('(min-width: 900px)').matches;
+    const wide = window.matchMedia('(min-width: 1200px)').matches;
     host.className = 'nav';
     host.innerHTML =
       '<div class="container nav-inner">' +
@@ -65,8 +66,8 @@
     host.className = 'footer';
     host.innerHTML =
       '<div class="container footer-inner">' +
-      `<div><strong style="color:var(--text)">RecursionVerse</strong> — Recursion · Backtracking · DP · Greedy, one call at a time.</div>` +
-      `<div class="flex wrap gap-2"><a href="${base}backtracking/index.html">Backtracking</a><a href="${base}greedy/index.html">Greedy</a><a href="https://github.com/Sanjoy-Chattopadhay/recursion-verse" target="_blank" rel="noopener">Source on GitHub</a></div>` +
+      `<div><strong style="color:var(--text)">RecursionVerse</strong> — Recursion · Backtracking · DP · Greedy · Branch &amp; Bound, one call at a time.</div>` +
+      `<div class="flex wrap gap-2"><a href="${base}backtracking/index.html">Backtracking</a><a href="${base}dp/index.html">DP</a><a href="${base}greedy/index.html">Greedy</a><a href="${base}branch-and-bound/index.html">Branch &amp; Bound</a><a href="https://github.com/Sanjoy-Chattopadhay/recursion-verse" target="_blank" rel="noopener">Source on GitHub</a></div>` +
       '</div>';
   }
 

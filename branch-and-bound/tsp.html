@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Travelling Salesman (Branch and Bound) · RecursionVerse</title>
+  <meta name="description" content="Travelling salesman problem by least-cost branch and bound using reduced cost matrices: full 5-city worked example, code, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="bnb"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Branch and Bound</a><span>/</span><span>Travelling Salesman</span></div>
+      <div class="eyebrow">Problem 01 · least-cost branch and bound</div>
+      <h1>Travelling Salesman Problem</h1>
+      <div class="chips mt-1"><span class="chip hard">Hard</span><span class="chip cyan">branch &amp; bound</span><span class="chip">reduced matrix</span><span class="chip">NP-hard</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/travelling-salesman-problem2732/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Travelling Salesman Problem</a>
+        <a class="plink" href="https://atcoder.jp/contests/abc180/tasks/abc180_e" target="_blank" rel="noopener"><span class="dot dot-at"></span>AtCoder ABC180 E</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <p class="problem-statement prose">A salesman must start at city 1, visit <strong>every other city exactly once</strong> and <strong>return to city 1</strong>. Given the cost matrix <code>C[i][j]</code> (cost of travelling i → j; ∞ on the diagonal), find the tour of <strong>minimum total cost</strong>.</p>
+        <div class="table-wrap mt-2">
+          <table class="table matrix">
+            <thead><tr><th>C</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
+            <tbody>
+              <tr><th>1</th><td>∞</td><td>20</td><td>30</td><td>10</td><td>11</td></tr>
+              <tr><th>2</th><td>15</td><td>∞</td><td>16</td><td>4</td><td>2</td></tr>
+              <tr><th>3</th><td>3</td><td>5</td><td>∞</td><td>2</td><td>4</td></tr>
+              <tr><th>4</th><td>19</td><td>6</td><td>18</td><td>∞</td><td>3</td></tr>
+              <tr><th>5</th><td>16</td><td>4</td><td>7</td><td>16</td><td>∞</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2"><strong>Answer:</strong> tour 1 → 4 → 2 → 5 → 3 → 1 with cost 10 + 6 + 2 + 7 + 3 = <strong>28</strong>.</p>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p>Brute force tries all (n − 1)! tours — 24 for 5 cities, but 87 billion for 15. Branch and bound builds tours city by city (the state-space tree) and needs a cheap <strong>lower bound</strong> on any tour that extends a partial path.</p>
+          <p><strong>Reduced cost matrix:</strong> every city must be <em>left</em> exactly once, so each row contributes at least its minimum; every city must be <em>entered</em> once, so each column too. Subtract the minimum of every row, then of every column. The <strong>total subtracted</strong> is a lower bound on every tour, and the reduced matrix has a 0 in every row and column.</p>
+          <p><strong>Child node</strong> (path extended by edge i → j): in the parent's reduced matrix A, set row i and column j to ∞ (i is left, j is entered) and <code>A[j][1] = ∞</code> (no early return to the start). Reduce again, giving r. Then</p>
+        </div>
+        <div class="example mt-2"><span class="k">ĉ(child) = ĉ(parent) + A[i][j] + r</span></div>
+        <p class="muted mt-2">Always expand the live node with the <strong>smallest ĉ</strong> (LC search). The first complete tour reached this way whose cost ≤ every other live node's bound is optimal.</p>
+      </section>
+
+      <section class="section" id="technique" data-toc="Algorithm">
+        <h2>Algorithm</h2>
+<script type="text/plain" data-clrs>
+REDUCE(A)
+    r = 0
+    for each row i with a finite minimum m > 0
+        subtract m from row i; r = r + m
+    for each column j with a finite minimum m > 0
+        subtract m from column j; r = r + m
+    return r
+
+TSP-LCBB(C, n)
+    root.A = C
+    root.cost = REDUCE(root.A)
+    root.path = [1]
+    upper = ∞
+    Q = {root}   // min-priority queue on cost
+    while Q ≠ ∅
+        E = EXTRACT-MIN(Q)
+        if E.cost ≥ upper
+            break   // every remaining node is worse
+        if |E.path| == n
+            upper = E.cost
+            best = E.path + [1]
+        else
+            i = last city of E.path
+            for each city j not in E.path
+                X.A = copy of E.A with row i, column j and A[j, 1] set to ∞
+                X.cost = E.cost + E.A[i, j] + REDUCE(X.A)
+                X.path = E.path + [j]
+                if X.cost < upper
+                    INSERT(Q, X)
+    return best, upper
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="python">
+import heapq
+INF = float("inf")
+
+def reduce(A):
+    n, r = len(A), 0
+    for i in range(n):
+        m = min(A[i])
+        if 0 < m < INF:
+            A[i] = [x - m for x in A[i]]
+            r += m
+    for j in range(n):
+        m = min(A[i][j] for i in range(n))
+        if 0 < m < INF:
+            for i in range(n):
+                A[i][j] -= m
+            r += m
+    return r
+
+def tsp_branch_and_bound(C):
+    n = len(C)
+    A = [row[:] for row in C]
+    pq = [(reduce(A), [0], A)]                 # (bound, path, reduced matrix)
+    upper, best = INF, None
+    while pq:
+        cost, path, A = heapq.heappop(pq)
+        if cost >= upper:
+            break
+        if len(path) == n:
+            upper, best = cost, path + [0]
+            continue
+        i = path[-1]
+        for j in range(n):
+            if j in path:
+                continue
+            B = [row[:] for row in A]
+            for k in range(n):
+                B[i][k] = B[k][j] = INF
+            B[j][0] = INF
+            c = cost + A[i][j] + reduce(B)
+            if c < upper:
+                heapq.heappush(pq, (c, path + [j], B))
+    return upper, [p + 1 for p in best]
+
+C = [[INF, 20, 30, 10, 11], [15, INF, 16, 4, 2], [3, 5, INF, 2, 4],
+     [19, 6, 18, INF, 3], [16, 4, 7, 16, INF]]
+print(tsp_branch_and_bound(C))   # (28, [1, 4, 2, 5, 3, 1])
+</script>
+<script type="text/plain" data-lang="cpp">
+const int INF = 1e9;
+typedef vector<vector<int>> Mat;
+
+int reduceMat(Mat& A) {
+    int n = A.size(), r = 0;
+    for (int i = 0; i < n; i++) {
+        int m = *min_element(A[i].begin(), A[i].end());
+        if (m > 0 && m < INF) { for (int& x : A[i]) if (x < INF) x -= m; r += m; }
+    }
+    for (int j = 0; j < n; j++) {
+        int m = INF;
+        for (int i = 0; i < n; i++) m = min(m, A[i][j]);
+        if (m > 0 && m < INF) { for (int i = 0; i < n; i++) if (A[i][j] < INF) A[i][j] -= m; r += m; }
+    }
+    return r;
+}
+
+struct Node { int cost; vector<int> path; Mat A; };
+struct Cmp { bool operator()(const Node& a, const Node& b) const { return a.cost > b.cost; } };
+
+int tsp(Mat C, vector<int>& best) {
+    int n = C.size(), upper = INF;
+    priority_queue<Node, vector<Node>, Cmp> pq;
+    int c0 = reduceMat(C);
+    pq.push({c0, {0}, C});
+    while (!pq.empty()) {
+        Node E = pq.top(); pq.pop();
+        if (E.cost >= upper) break;
+        if ((int)E.path.size() == n) { upper = E.cost; best = E.path; best.push_back(0); continue; }
+        int i = E.path.back();
+        for (int j = 0; j < n; j++) {
+            if (find(E.path.begin(), E.path.end(), j) != E.path.end()) continue;
+            Mat B = E.A;
+            for (int k = 0; k < n; k++) B[i][k] = B[k][j] = INF;
+            B[j][0] = INF;
+            int c = E.cost + E.A[i][j] + reduceMat(B);
+            if (c < upper) { vector<int> p = E.path; p.push_back(j); pq.push({c, p, B}); }
+        }
+    }
+    return upper;
+}
+</script>
+<script type="text/plain" data-lang="java">
+static final int INF = 1_000_000_000;
+
+static int reduce(int[][] A) {
+    int n = A.length, r = 0;
+    for (int i = 0; i < n; i++) {
+        int m = INF;
+        for (int x : A[i]) m = Math.min(m, x);
+        if (m > 0 && m < INF) { for (int j = 0; j < n; j++) if (A[i][j] < INF) A[i][j] -= m; r += m; }
+    }
+    for (int j = 0; j < n; j++) {
+        int m = INF;
+        for (int i = 0; i < n; i++) m = Math.min(m, A[i][j]);
+        if (m > 0 && m < INF) { for (int i = 0; i < n; i++) if (A[i][j] < INF) A[i][j] -= m; r += m; }
+    }
+    return r;
+}
+
+record Node(int cost, List<Integer> path, int[][] A) {}
+
+static int tsp(int[][] C) {
+    int n = C.length, upper = INF;
+    PriorityQueue<Node> pq = new PriorityQueue<>((a, b) -> a.cost() - b.cost());
+    int[][] A0 = Arrays.stream(C).map(int[]::clone).toArray(int[][]::new);
+    pq.add(new Node(reduce(A0), List.of(0), A0));
+    while (!pq.isEmpty()) {
+        Node E = pq.poll();
+        if (E.cost() >= upper) break;
+        if (E.path().size() == n) { upper = E.cost(); continue; }
+        int i = E.path().get(E.path().size() - 1);
+        for (int j = 0; j < n; j++) {
+            if (E.path().contains(j)) continue;
+            int[][] B = Arrays.stream(E.A()).map(int[]::clone).toArray(int[][]::new);
+            for (int k = 0; k < n; k++) { B[i][k] = INF; B[k][j] = INF; }
+            B[j][0] = INF;
+            int c = E.cost() + E.A()[i][j] + reduce(B);
+            if (c < upper) {
+                List<Integer> p = new ArrayList<>(E.path()); p.add(j);
+                pq.add(new Node(c, p, B));
+            }
+        }
+    }
+    return upper;
+}
+</script>
+        </div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example</h2>
+        <h3>Step 1 — reduce the root</h3>
+        <p class="muted">Row minimums 10, 2, 2, 3, 4 (sum 21). Then column minimums of the result: 1 (column 1), 0, 3 (column 3), 0, 0 (sum 4). <strong>ĉ(root) = 21 + 4 = 25</strong> — no tour can cost less than 25.</p>
+        <div class="table-wrap">
+          <table class="table matrix">
+            <thead><tr><th>A (root)</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
+            <tbody>
+              <tr><th>1</th><td>∞</td><td>10</td><td>17</td><td>0</td><td>1</td></tr>
+              <tr><th>2</th><td>12</td><td>∞</td><td>11</td><td>2</td><td>0</td></tr>
+              <tr><th>3</th><td>0</td><td>3</td><td>∞</td><td>0</td><td>2</td></tr>
+              <tr><th>4</th><td>15</td><td>3</td><td>12</td><td>∞</td><td>0</td></tr>
+              <tr><th>5</th><td>11</td><td>0</td><td>0</td><td>12</td><td>∞</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="mt-3">Step 2 — children of the root (path 1 → j)</h3>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Node</th><th>A[1][j]</th><th>Extra reduction r</th><th>ĉ = 25 + A[1][j] + r</th></tr></thead>
+            <tbody>
+              <tr><td>1 → 2</td><td>10</td><td>0</td><td>35</td></tr>
+              <tr><td>1 → 3</td><td>17</td><td>11 (column 1)</td><td>53</td></tr>
+              <tr><td>1 → 4</td><td>0</td><td>0</td><td class="hl">25 ← smallest, expand</td></tr>
+              <tr><td>1 → 5</td><td>1</td><td>5 (rows 2 and 4)</td><td>31</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="mt-3">Step 3 — expand 1 → 4</h3>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Node</th><th>A[4][j]</th><th>r</th><th>ĉ = 25 + A[4][j] + r</th></tr></thead>
+            <tbody>
+              <tr><td>1 → 4 → 2</td><td>3</td><td>0</td><td class="hl">28 ← smallest live node</td></tr>
+              <tr><td>1 → 4 → 3</td><td>12</td><td>13</td><td>50</td></tr>
+              <tr><td>1 → 4 → 5</td><td>0</td><td>11</td><td>36</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2">Live nodes now: 28, 31, 35, 36, 50, 53 → expand 1 → 4 → 2.</p>
+
+        <h3 class="mt-3">Step 4 — expand 1 → 4 → 2</h3>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Node</th><th>A[2][j]</th><th>r</th><th>ĉ = 28 + A[2][j] + r</th></tr></thead>
+            <tbody>
+              <tr><td>1 → 4 → 2 → 3</td><td>11</td><td>13</td><td>52</td></tr>
+              <tr><td>1 → 4 → 2 → 5</td><td>0</td><td>0</td><td class="hl">28 ← expand</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="mt-3">Step 5 — the only city left is 3</h3>
+        <p class="muted">1 → 4 → 2 → 5 → 3 has ĉ = 28 + 0 + 0 = 28 and is a complete tour (return 3 → 1). <strong>upper = 28.</strong> Every remaining live node (31, 35, 36, 50, 52, 53) has a bound ≥ 28, so all are killed.</p>
+        <div class="callout tip mt-2"><span class="ic">✓</span><p><strong>Optimal tour 1 → 4 → 2 → 5 → 3 → 1, cost 28.</strong> Check: C[1][4] + C[4][2] + C[2][5] + C[5][3] + C[3][1] = 10 + 6 + 2 + 7 + 3 = 28. Only 11 nodes were generated (root + 4 + 3 + 2 + 1) instead of the 65 nodes (24 complete tours) of the full tree.</p></div>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">4 cities: C = [[∞, 10, 15, 20], [5, ∞, 9, 10], [6, 13, ∞, 12], [8, 8, 9, ∞]]. Find the root bound and the optimal tour.</span></summary>
+          <div class="ans"><p>Root reduction = <strong>35</strong>. Optimal tour <strong>1 → 2 → 4 → 3 → 1, cost 10 + 10 + 9 + 6 = 35</strong> — here the root bound is already exact.</p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">Why do we set A[j][1] = ∞ when the path reaches j?</span></summary>
+          <div class="ans"><p>Going j → 1 now would close the tour before all cities are visited. Blocking that entry keeps the bound honest.</p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">Is the TSP solved faster by DP?</span></summary>
+          <div class="ans"><p>Held–Karp DP over subsets runs in Θ(n²·2ⁿ) time and Θ(n·2ⁿ) memory — guaranteed, unlike B&amp;B, but only practical up to n ≈ 20. B&amp;B with good bounds often solves larger instances in practice.</p></div></details>
+        <details class="ex"><summary><span class="qn">P4</span><span class="q">Compute the reduced cost of node 1 → 5 by hand.</span></summary>
+          <div class="ans"><p>From the root matrix, set row 1, column 5 and A[5][1] to ∞. Row 2's minimum becomes 2 and row 4's becomes 3 → r = 5. ĉ = 25 + A[1][5] + 5 = 25 + 1 + 5 = <strong>31</strong>.</p></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Still exponential in the worst case.</strong> TSP is NP-hard; a weak bound can force B&amp;B to explore almost the whole tree.</p></div>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Memory hungry.</strong> Every live node stores an n × n matrix, and the priority queue can hold very many nodes.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Bound quality matters.</strong> Reduced matrices are simple; stronger bounds (1-trees, LP relaxations) prune far more but cost more per node.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>For very large instances</strong> use approximation (2-approx via MST for metric TSP, Christofides 1.5) or heuristics (nearest neighbour, 2-opt).</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Part</th><th>Work</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td>Reduce a matrix</td><td>scan n rows + n columns of length n</td><td>O(n²)</td></tr>
+              <tr><td>Create one child</td><td>copy matrix + reduce</td><td>O(n²)</td></tr>
+              <tr><td>Expand one node</td><td>up to n − 1 children</td><td>O(n³)</td></tr>
+              <tr><td>Nodes in the tree</td><td>1 + (n−1) + (n−1)(n−2) + … </td><td>O((n − 1)!) worst case</td></tr>
+              <tr><td>Priority queue</td><td>insert / extract per node</td><td>O(log of #live nodes)</td></tr>
+              <tr><td><b>Total (worst)</b></td><td>every node generated</td><td><b>O(n² · n!)</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Worst case</span><span class="v">O(n²·n!)</span><span class="faint" style="font-size:.86rem">no pruning happens</span></div>
+          <div class="kbox"><span class="k">In practice</span><span class="v">much smaller</span><span class="faint" style="font-size:.86rem">11 of 65 nodes in the example</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(n² · live nodes)</span><span class="faint" style="font-size:.86rem">one matrix per live node</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/travelling-salesman-problem2732/1" target="_blank" rel="noopener">Travelling Salesman Problem</a></td><td><span class="chip hard">Hard</span></td><td>n ≤ 10 — B&amp;B or bitmask DP</td></tr>
+              <tr><td><span class="plat">AtCoder</span></td><td><a href="https://atcoder.jp/contests/abc180/tasks/abc180_e" target="_blank" rel="noopener">ABC180 E · Traveling Salesman among Aerial Cities</a></td><td><span class="chip medium">Medium</span></td><td>n ≤ 17, Held–Karp DP</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/find-the-shortest-superstring/" target="_blank" rel="noopener">943. Find the Shortest Superstring</a></td><td><span class="chip hard">Hard</span></td><td>TSP on overlaps</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/shortest-path-visiting-all-nodes/" target="_blank" rel="noopener">847. Shortest Path Visiting All Nodes</a></td><td><span class="chip hard">Hard</span></td><td>BFS over (node, visited set)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="index.html"><small>← Track</small>Branch and Bound overview</a>
+          <a class="next" href="../index.html"><small>Back to →</small>Home</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>n-Queen Problem — Backtracking · RecursionVerse</title>
+  <meta name="description" content="The n-Queen problem by backtracking: place one queen per row, check column and diagonals, undo on dead ends. Worked 4-queens trace, code in C++/Java/Python, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="backtracking"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Backtracking</a><span>/</span><span>n-Queen</span></div>
+      <div class="eyebrow">Problem 05 · one queen per row</div>
+      <h1>n-Queen Problem</h1>
+      <div class="chips mt-1"><span class="chip hard">Hard</span><span class="chip accent">backtracking</span><span class="chip">O(n!)</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/n-queen-problem0315/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · N-Queen Problem</a>
+        <a class="plink" href="https://leetcode.com/problems/n-queens/" target="_blank" rel="noopener"><span class="dot dot-lc"></span>LeetCode 51 · N-Queens</a>
+        <a class="plink" href="https://cses.fi/problemset/task/1624" target="_blank" rel="noopener"><span class="dot dot-cses"></span>CSES 1624 · Chessboard and Queens</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <p class="problem-statement prose">Place <strong>n queens</strong> on an <strong>n × n</strong> chessboard so that <strong>no two queens attack each other</strong> — no two share a row, a column or a diagonal. Print all such arrangements (or count them).</p>
+        <div class="flex wrap gap-2 mt-2" style="gap:24px;align-items:flex-start">
+          <div><div class="board" style="--n:4" role="img" aria-label="4-queens solution [2, 4, 1, 3]"><span></span><span class="q dk">♛</span><span></span><span class="dk"></span><span class="dk"></span><span></span><span class="dk"></span><span class="q">♛</span><span class="q">♛</span><span class="dk"></span><span></span><span class="dk"></span><span class="dk"></span><span></span><span class="q dk">♛</span><span></span></div><p class="muted mt-1 mb-0">4-queens: (2, 4, 1, 3)</p></div>
+          <div><div class="board" style="--n:4" role="img" aria-label="4-queens solution [3, 1, 4, 2]"><span></span><span class="dk"></span><span class="q">♛</span><span class="dk"></span><span class="q dk">♛</span><span></span><span class="dk"></span><span></span><span></span><span class="dk"></span><span></span><span class="q dk">♛</span><span class="dk"></span><span class="q">♛</span><span class="dk"></span><span></span></div><p class="muted mt-1 mb-0">4-queens: (3, 1, 4, 2)</p></div>
+          <div><div class="board" style="--n:8" role="img" aria-label="8-queens solution [1, 5, 8, 6, 3, 7, 2, 4]"><span class="q">♛</span><span class="dk"></span><span></span><span class="dk"></span><span></span><span class="dk"></span><span></span><span class="dk"></span><span class="dk"></span><span></span><span class="dk"></span><span></span><span class="q dk">♛</span><span></span><span class="dk"></span><span></span><span></span><span class="dk"></span><span></span><span class="dk"></span><span></span><span class="dk"></span><span></span><span class="q dk">♛</span><span class="dk"></span><span></span><span class="dk"></span><span></span><span class="dk"></span><span class="q">♛</span><span class="dk"></span><span></span><span></span><span class="dk"></span><span class="q">♛</span><span class="dk"></span><span></span><span class="dk"></span><span></span><span class="dk"></span><span class="dk"></span><span></span><span class="dk"></span><span></span><span class="dk"></span><span></span><span class="q dk">♛</span><span></span><span></span><span class="q dk">♛</span><span></span><span class="dk"></span><span></span><span class="dk"></span><span></span><span class="dk"></span><span class="dk"></span><span></span><span class="dk"></span><span class="q">♛</span><span class="dk"></span><span></span><span class="dk"></span><span></span></div><p class="muted mt-1 mb-0">8-queens: (1, 5, 8, 6, 3, 7, 2, 4) — one of 92</p></div>
+        </div>
+        <p class="muted mt-2">A solution is written as <code>x[1..n]</code>, where <code>x[i]</code> is the column of the queen in row i.</p>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p>Each row must hold exactly one queen, so decide row by row: <strong>which column for the queen in row k?</strong> That shrinks the search from C(n², n) placements to at most n<sup>n</sup>, and since columns can't repeat, n!.</p>
+          <p>Place a queen in row k only if it is <strong>safe</strong> with all queens in rows 1..k−1, then recurse to row k + 1. If no column of row k is safe, we hit a <strong>dead end</strong>: go back (backtrack) to row k − 1 and move its queen to the next column.</p>
+          <p><strong>Diagonal test:</strong> queens (i, x[i]) and (k, c) share a diagonal exactly when <code>|x[i] − c| = |i − k|</code>.</p>
+        </div>
+        <div class="map-grid mt-2">
+          <div class="map-row" style="--c:var(--s-change)"><span class="k">Shared state</span><span class="v"><code>x[1..n]</code> — the column chosen in each row.</span></div>
+          <div class="map-row" style="--c:var(--s-base)"><span class="k">Base case</span><span class="v"><code>k &gt; n</code> → all rows filled, print x.</span></div>
+          <div class="map-row" style="--c:var(--s-choice)"><span class="k">Choices</span><span class="v">column c = 1..n for row k.</span></div>
+          <div class="map-row" style="--c:var(--s-valid)"><span class="k">isValid</span><span class="v">PLACE(k, c): for all i &lt; k, <code>x[i] ≠ c</code> and <code>|x[i] − c| ≠ k − i</code>.</span></div>
+          <div class="map-row" style="--c:var(--s-recurse)"><span class="k">Recurse</span><span class="v"><code>x[k] = c</code>, then NQUEENS(k + 1).</span></div>
+          <div class="map-row" style="--c:var(--s-revert)"><span class="k">Revert</span><span class="v">nothing to undo explicitly — the next choice overwrites <code>x[k]</code>.</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="technique" data-toc="Algorithm">
+        <h2>Algorithm (Horowitz–Sahni style)</h2>
+<script type="text/plain" data-clrs>
+PLACE(k, c)
+    for i = 1 to k - 1
+        if x[i] == c or |x[i] - c| == k - i
+            return FALSE   // same column or same diagonal
+    return TRUE
+
+NQUEENS(k, n)
+    for c = 1 to n
+        if PLACE(k, c)
+            x[k] = c
+            if k == n
+                print x[1..n]
+            else NQUEENS(k + 1, n)
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+int n, x[20];
+
+bool place(int k, int c) {
+    for (int i = 1; i < k; i++)
+        if (x[i] == c || abs(x[i] - c) == k - i) return false;
+    return true;
+}
+
+void nQueens(int k) {
+    for (int c = 1; c <= n; c++)
+        if (place(k, c)) {
+            x[k] = c;
+            if (k == n) {
+                for (int i = 1; i <= n; i++) cout << x[i] << ' ';
+                cout << '\n';
+            } else nQueens(k + 1);
+        }
+}
+// n = 4; nQueens(1);   prints 2 4 1 3  and  3 1 4 2
+</script>
+<script type="text/plain" data-lang="java">
+static int n;
+static int[] x = new int[20];
+
+static boolean place(int k, int c) {
+    for (int i = 1; i < k; i++)
+        if (x[i] == c || Math.abs(x[i] - c) == k - i) return false;
+    return true;
+}
+
+static void nQueens(int k) {
+    for (int c = 1; c <= n; c++)
+        if (place(k, c)) {
+            x[k] = c;
+            if (k == n) {
+                for (int i = 1; i <= n; i++) System.out.print(x[i] + " ");
+                System.out.println();
+            } else nQueens(k + 1);
+        }
+}
+</script>
+<script type="text/plain" data-lang="python">
+def n_queens(n):
+    x, solutions = [0] * (n + 1), []
+
+    def place(k, c):
+        return all(x[i] != c and abs(x[i] - c) != k - i for i in range(1, k))
+
+    def solve(k):
+        for c in range(1, n + 1):
+            if place(k, c):
+                x[k] = c
+                if k == n:
+                    solutions.append(x[1:])
+                else:
+                    solve(k + 1)
+
+    solve(1)
+    return solutions
+
+print(n_queens(4))        # [[2, 4, 1, 3], [3, 1, 4, 2]]
+print(len(n_queens(8)))   # 92
+</script>
+        </div>
+        <div class="callout tip mt-2"><span class="ic">✓</span><p><strong>O(1) safety check:</strong> keep three boolean arrays — <code>col[c]</code>, <code>diag1[r + c]</code>, <code>diag2[r − c + n]</code>. Mark them when placing, unmark when backtracking (that is the explicit "revert").</p></div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example — 4 queens (first solution)</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Step</th><th>Row</th><th>Try column</th><th>Result</th><th>x so far</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>1</td><td>1</td><td class="hl">safe, place</td><td>(1)</td></tr>
+              <tr><td>2</td><td>2</td><td>1, 2 ✗ (column, diagonal) · 3</td><td class="hl">place</td><td>(1, 3)</td></tr>
+              <tr><td>3</td><td>3</td><td>1 ✗ col · 2 ✗ diag · 3 ✗ col · 4 ✗ diag</td><td class="x">dead end — backtrack</td><td>(1, 3)</td></tr>
+              <tr><td>4</td><td>2</td><td>4</td><td class="hl">place</td><td>(1, 4)</td></tr>
+              <tr><td>5</td><td>3</td><td>1 ✗ · 2</td><td class="hl">place</td><td>(1, 4, 2)</td></tr>
+              <tr><td>6</td><td>4</td><td>1 ✗ · 2 ✗ · 3 ✗ diag · 4 ✗ col</td><td class="x">dead end — backtrack</td><td>(1, 4, 2)</td></tr>
+              <tr><td>7</td><td>3</td><td>3 ✗ · 4 ✗</td><td class="x">dead end — backtrack</td><td>(1, 4)</td></tr>
+              <tr><td>8</td><td>2</td><td>no columns left</td><td class="x">backtrack to row 1</td><td>(1)</td></tr>
+              <tr><td>9</td><td>1</td><td>2</td><td class="hl">place</td><td>(2)</td></tr>
+              <tr><td>10</td><td>2</td><td>1 ✗ · 2 ✗ · 3 ✗ · 4</td><td class="hl">place</td><td>(2, 4)</td></tr>
+              <tr><td>11</td><td>3</td><td>1</td><td class="hl">place</td><td>(2, 4, 1)</td></tr>
+              <tr><td>12</td><td>4</td><td>1 ✗ · 2 ✗ · 3</td><td class="hl">place — solution!</td><td><b>(2, 4, 1, 3)</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2">Continuing the search finds the mirror solution <b>(3, 1, 4, 2)</b>. 4-queens has exactly <strong>2</strong> solutions.</p>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">How many solutions do n = 1 … 8 have?</span></summary>
+          <div class="ans"><p>1, 0, 0, 2, 10, 4, 40, <strong>92</strong>. (n = 2 and 3 have none.)</p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">Find the first 5-queens solution the algorithm prints.</span></summary>
+          <div class="ans"><p><strong>(1, 3, 5, 2, 4)</strong> — row 1 col 1, row 2 col 3, row 3 col 5, row 4 col 2, row 5 col 4.</p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">Why is it enough to try only columns 1..⌈n/2⌉ for row 1 when counting?</span></summary>
+          <div class="ans"><p>The board is symmetric: every solution with the first queen in column c has a mirror image with it in column n + 1 − c. Count the left half, double it, and handle the middle column once when n is odd.</p></div></details>
+        <details class="ex"><summary><span class="qn">P4</span><span class="q">Draw the first levels of the state-space tree for 4-queens. How many nodes does backtracking generate vs brute force?</span></summary>
+          <div class="ans"><p>Root → 4 children (row 1 columns) → each child only gets its safe columns, and so on. Counting the root and every safe placement, backtracking creates only 9 nodes before reaching (2, 4, 1, 3) (the 12 steps in the table above) — compared with 4<sup>4</sup> = 256 leaves for blind enumeration.</p></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Exponential.</strong> Counting all solutions grows roughly like n!; n = 15 already takes noticeable time, n = 27 was a record computation.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>O(n) safety check</strong> in the simple version — use the three boolean arrays (or bitmasks) for O(1).</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Finding just one solution</strong> for large n is better done with a direct construction formula or local search (min-conflicts), not backtracking.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Quantity</th><th>Reasoning</th><th>Bound</th></tr></thead>
+            <tbody>
+              <tr><td>Brute force placements</td><td>choose n of n² squares</td><td>C(n², n) — 4.4 × 10⁹ for n = 8</td></tr>
+              <tr><td>One queen per row</td><td>n choices per row</td><td>n<sup>n</sup> — 16.7 × 10⁶ for n = 8</td></tr>
+              <tr><td>Plus distinct columns</td><td>n · (n−1) · … · 1</td><td>n! — 40 320 for n = 8</td></tr>
+              <tr><td>Nodes in the tree</td><td>row k has ≤ n!/(n−k)! nodes; diagonal pruning cuts far more</td><td>O(n!) — about 2 000 nodes for n = 8</td></tr>
+              <tr><td>Work per node</td><td>PLACE scans k − 1 rows (O(1) with arrays)</td><td>O(n) → O(1)</td></tr>
+              <tr><td><b>Total</b></td><td></td><td><b>O(n · n!)</b>, O(n!) with O(1) checks</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Time</span><span class="v">O(n!)</span><span class="faint" style="font-size:.86rem">upper bound; real counts much smaller</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(n)</span><span class="faint" style="font-size:.86rem">x[] and recursion depth n</span></div>
+          <div class="kbox"><span class="k">Solutions</span><span class="v">92 for n = 8</span><span class="faint" style="font-size:.86rem">12 distinct up to symmetry</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/n-queen-problem0315/1" target="_blank" rel="noopener">N-Queen Problem</a></td><td><span class="chip hard">Hard</span></td><td>this page</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/n-queens/" target="_blank" rel="noopener">51. N-Queens</a></td><td><span class="chip hard">Hard</span></td><td>print boards</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/n-queens-ii/" target="_blank" rel="noopener">52. N-Queens II</a></td><td><span class="chip hard">Hard</span></td><td>count only</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1624" target="_blank" rel="noopener">1624 · Chessboard and Queens</a></td><td><span class="chip medium">Medium</span></td><td>8 queens with blocked squares</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/sudoku-solver/" target="_blank" rel="noopener">37. Sudoku Solver</a></td><td><span class="chip hard">Hard</span></td><td>same place / check / undo pattern</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="graph-coloring.html"><small>← Previous</small>04 · Graph Colouring</a>
+          <a class="next" href="sum-of-subsets.html"><small>Next problem →</small>06 · Sum of Subsets</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

@@ -22,7 +22,11 @@ An interactive course on **Recursion · Backtracking · Dynamic Programming · G
   - `backtracking/k-swaps.html`
   - `backtracking/hamiltonian-cycle.html`
   - `backtracking/graph-coloring.html`
-- `recursion.html`, `dp.html`, `greedy.html` — tracks coming soon.
+- `greedy/` — 9 problems: fractional knapsack, activity selection, job sequencing, Huffman coding, Dijkstra, Prim, Kruskal, Bellman–Ford, optimal reliability allocation.
+- `dp/` — 0/1 knapsack, Floyd's all-pairs shortest paths, Warshall's transitive closure, resource allocation.
+- `backtracking/n-queens.html`, `backtracking/sum-of-subsets.html` — simple study pages (no animation).
+- `branch-and-bound/` — travelling salesman by least-cost branch and bound.
+- `recursion.html` — track coming soon.
 
 ## How it works
 

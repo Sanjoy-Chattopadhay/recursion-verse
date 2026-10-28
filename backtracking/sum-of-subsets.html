@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sum of Subsets — Backtracking · RecursionVerse</title>
+  <meta name="description" content="Sum of subsets by backtracking: include or exclude each weight, prune with two bounds. Worked trace for w = {5,10,12,13,15,18}, M = 30, code, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="backtracking"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Backtracking</a><span>/</span><span>Sum of Subsets</span></div>
+      <div class="eyebrow">Problem 06 · include or exclude</div>
+      <h1>Sum of Subsets</h1>
+      <div class="chips mt-1"><span class="chip medium">Medium</span><span class="chip accent">backtracking</span><span class="chip">O(2ⁿ)</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/subset-sum-problem-1611555638/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Subset Sum Problem</a>
+        <a class="plink" href="https://leetcode.com/problems/combination-sum-ii/" target="_blank" rel="noopener"><span class="dot dot-lc"></span>LeetCode 40 · Combination Sum II</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <p class="problem-statement prose">Given <strong>n distinct positive numbers</strong> (weights) <code>w[1..n]</code> and a target <strong>M</strong>, find <strong>all subsets</strong> whose elements add up to exactly M. A solution is written as a 0/1 vector <code>x[1..n]</code>, where <code>x[i] = 1</code> means w[i] is in the subset.</p>
+        <div class="example mt-2"><span class="k">w = </span>{5, 10, 12, 13, 15, 18},  M = 30
+<span class="k">out  </span><span class="o">{5, 10, 15}   x = (1,1,0,0,1,0)</span>
+<span class="k">     </span><span class="o">{5, 12, 13}   x = (1,0,1,1,0,0)</span>
+<span class="k">     </span><span class="o">{12, 18}      x = (0,0,1,0,0,1)</span></div>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p>Every subset is a sequence of yes/no decisions: <strong>include w[1]?</strong> then <strong>include w[2]?</strong> … That is a binary state-space tree with 2<sup>n</sup> leaves. Backtracking walks it depth-first and <strong>kills a branch as soon as it can't lead to M</strong>.</p>
+          <p>Sort the weights in increasing order. At a node, let <code>s</code> = sum chosen so far, <code>r</code> = sum of the weights not yet decided. Two bounds kill a node:</p>
+          <ul>
+            <li><strong>Too much:</strong> <code>s + w[k+1] &gt; M</code> — even the smallest remaining weight overshoots (weights are sorted).</li>
+            <li><strong>Too little:</strong> <code>s + r &lt; M</code> — even taking everything left can't reach M.</li>
+          </ul>
+        </div>
+        <div class="map-grid mt-2">
+          <div class="map-row" style="--c:var(--s-change)"><span class="k">Shared state</span><span class="v"><code>x[1..n]</code>, plus <code>s</code> and <code>r</code> passed by value.</span></div>
+          <div class="map-row" style="--c:var(--s-base)"><span class="k">Base case</span><span class="v"><code>s + w[k] == M</code> → print the subset.</span></div>
+          <div class="map-row" style="--c:var(--s-choice)"><span class="k">Choices</span><span class="v"><code>x[k] = 1</code> (include) or <code>x[k] = 0</code> (exclude).</span></div>
+          <div class="map-row" style="--c:var(--s-valid)"><span class="k">isValid</span><span class="v">include: <code>s + w[k] + w[k+1] ≤ M</code> · exclude: <code>s + r − w[k] ≥ M</code> and <code>s + w[k+1] ≤ M</code>.</span></div>
+          <div class="map-row" style="--c:var(--s-recurse)"><span class="k">Recurse</span><span class="v">SUMOFSUB(s + w[k] or s, k + 1, r − w[k]).</span></div>
+          <div class="map-row" style="--c:var(--s-revert)"><span class="k">Revert</span><span class="v">set <code>x[k] = 0</code> before trying the exclude branch.</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="technique" data-toc="Algorithm">
+        <h2>Algorithm (Horowitz–Sahni)</h2>
+        <p class="muted">Weights sorted increasingly; initial call SUMOFSUB(0, 1, Σw), assuming w[1] ≤ M ≤ Σw.</p>
+<script type="text/plain" data-clrs>
+SUMOFSUB(s, k, r)
+    x[k] = 1   // left child: include w[k]
+    if s + w[k] == M
+        print x[1..k]
+    else if s + w[k] + w[k + 1] ≤ M
+        SUMOFSUB(s + w[k], k + 1, r - w[k])
+    if s + r - w[k] ≥ M and s + w[k + 1] ≤ M
+        x[k] = 0   // right child: exclude w[k]
+        SUMOFSUB(s, k + 1, r - w[k])
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+vector<int> w;       // sorted, 1-based, with w[n+1] = INT_MAX as a sentinel
+vector<int> x;
+int M, n;
+
+void sumOfSub(long long s, int k, long long r) {
+    x[k] = 1;
+    if (s + w[k] == M) {
+        for (int i = 1; i <= k; i++) if (x[i]) cout << w[i] << ' ';
+        cout << '\n';
+    } else if (k < n && s + w[k] + w[k + 1] <= M)
+        sumOfSub(s + w[k], k + 1, r - w[k]);
+    if (k < n && s + r - w[k] >= M && s + w[k + 1] <= M) {
+        x[k] = 0;
+        sumOfSub(s, k + 1, r - w[k]);
+    }
+}
+</script>
+<script type="text/plain" data-lang="java">
+static int[] w, x;   // w sorted, 1-based
+static int M, n;
+
+static void sumOfSub(long s, int k, long r) {
+    x[k] = 1;
+    if (s + w[k] == M) {
+        for (int i = 1; i <= k; i++) if (x[i] == 1) System.out.print(w[i] + " ");
+        System.out.println();
+    } else if (k < n && s + w[k] + w[k + 1] <= M)
+        sumOfSub(s + w[k], k + 1, r - w[k]);
+    if (k < n && s + r - w[k] >= M && s + w[k + 1] <= M) {
+        x[k] = 0;
+        sumOfSub(s, k + 1, r - w[k]);
+    }
+}
+</script>
+<script type="text/plain" data-lang="python">
+def sum_of_subsets(weights, M):
+    w = [0] + sorted(weights)          # 1-based
+    n = len(weights)
+    x = [0] * (n + 1)
+    out = []
+
+    def solve(s, k, r):
+        x[k] = 1
+        if s + w[k] == M:
+            out.append([w[i] for i in range(1, k + 1) if x[i]])
+        elif k < n and s + w[k] + w[k + 1] <= M:
+            solve(s + w[k], k + 1, r - w[k])
+        if k < n and s + r - w[k] >= M and s + w[k + 1] <= M:
+            x[k] = 0
+            solve(s, k + 1, r - w[k])
+
+    solve(0, 1, sum(weights))
+    return out
+
+print(sum_of_subsets([5, 10, 12, 13, 15, 18], 30))
+# [[5, 10, 15], [5, 12, 13], [12, 18]]
+</script>
+        </div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example — w = {5, 10, 12, 13, 15, 18}, M = 30</h2>
+        <p class="muted">Σw = 73. Each row is one call SUMOFSUB(s, k, r). "In" = include w[k], "Out" = exclude w[k].</p>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Call (s, k, r)</th><th>w[k]</th><th>Include?</th><th>Exclude?</th></tr></thead>
+            <tbody>
+              <tr><td>(0, 1, 73)</td><td>5</td><td>5 + 10 ≤ 30 → go</td><td>68 ≥ 30, 0 + 10 ≤ 30 → go (later)</td></tr>
+              <tr><td>(5, 2, 68)</td><td>10</td><td>15 + 12 ≤ 30 → go</td><td>63 ≥ 30, 5 + 12 ≤ 30 → go (later)</td></tr>
+              <tr><td>(15, 3, 58)</td><td>12</td><td>27 + 13 &gt; 30 ✗</td><td>61 ≥ 30, 15 + 13 ≤ 30 → go</td></tr>
+              <tr><td>(15, 4, 46)</td><td>13</td><td>28 + 15 &gt; 30 ✗</td><td>48 ≥ 30, 15 + 15 ≤ 30 → go</td></tr>
+              <tr><td>(15, 5, 33)</td><td>15</td><td class="hl">15 + 15 = 30 → {5, 10, 15} ✓</td><td>15 + 18 &gt; 30 ✗</td></tr>
+              <tr><td>(5, 3, 58)</td><td>12</td><td>17 + 13 ≤ 30 → go</td><td>51 ≥ 30, 5 + 13 ≤ 30 → go (later)</td></tr>
+              <tr><td>(17, 4, 46)</td><td>13</td><td class="hl">17 + 13 = 30 → {5, 12, 13} ✓</td><td>17 + 15 &gt; 30 ✗</td></tr>
+              <tr><td>(5, 4, 46)</td><td>13</td><td>18 + 15 &gt; 30 ✗</td><td>38 ≥ 30, 5 + 15 ≤ 30 → go</td></tr>
+              <tr><td>(5, 5, 33)</td><td>15</td><td>20 + 18 &gt; 30 ✗</td><td>5 + 33 − 15 = 23 &lt; 30 ✗</td></tr>
+              <tr><td>(0, 2, 68)</td><td>10</td><td>10 + 12 ≤ 30 → go (dead ends: 10+12, 10+13, 10+15 never reach 30)</td><td>58 ≥ 30 → go</td></tr>
+              <tr><td>(0, 3, 58)</td><td>12</td><td>12 + 13 ≤ 30 → go</td><td>46 ≥ 30 → go (later)</td></tr>
+              <tr><td>(12, 5, 33)</td><td>15</td><td>27 + 18 &gt; 30 ✗</td><td>12 + 33 − 15 = 30 ≥ 30, 12 + 18 ≤ 30 → go</td></tr>
+              <tr><td>(12, 6, 18)</td><td>18</td><td class="hl">12 + 18 = 30 → {12, 18} ✓</td><td>—</td></tr>
+              <tr><td>(0, 4, 46)</td><td>13</td><td>13 + 15 ≤ 30 → go, but 28 + 18 &gt; 30 dead end</td><td>33 ≥ 30 → go; then 15 alone can't reach 30</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2"><strong>Three solutions</strong>, found with only <strong>20 calls</strong> instead of the 2<sup>6</sup> = 64 leaves (127 nodes) of the full tree.</p>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">w = {3, 5, 6, 7}, M = 15.</span></summary>
+          <div class="ans"><p>Only <strong>{3, 5, 7}</strong> (x = 1, 1, 0, 1). 7 calls.</p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">w = {11, 13, 24, 7}, M = 31. (Sort first!)</span></summary>
+          <div class="ans"><p>Sorted: {7, 11, 13, 24}. Solutions <strong>{7, 11, 13}</strong> and <strong>{7, 24}</strong>.</p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">w = {1, 2, 5, 6, 8}, M = 9.</span></summary>
+          <div class="ans"><p><strong>{1, 2, 6}</strong> and <strong>{1, 8}</strong>.</p></div></details>
+        <details class="ex"><summary><span class="qn">P4</span><span class="q">w = {5, 7, 10, 12, 15, 18, 20}, M = 35.</span></summary>
+          <div class="ans"><p><strong>{5, 10, 20}, {5, 12, 18}, {7, 10, 18}, {15, 20}</strong>.</p></div></details>
+        <details class="ex"><summary><span class="qn">P5</span><span class="q">If you only need to know <em>whether</em> some subset sums to M, what is faster for small M?</span></summary>
+          <div class="ans"><p>DP: <code>can[j]</code> = some subset sums to j. For each weight, loop j from M down to w: <code>can[j] |= can[j − w]</code>. O(n·M) time.</p></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Exponential worst case.</strong> When many subsets come close to M, pruning helps little and the search approaches 2<sup>n</sup> nodes. Subset sum is NP-complete.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>The "too much" bound needs sorted weights.</strong> Without sorting, <code>s + w[k+1] &gt; M</code> does not mean all later weights overshoot.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Positive weights only.</strong> With negative numbers neither bound is valid.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Part</th><th>Reasoning</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td>Sort the weights</td><td>once</td><td>O(n log n)</td></tr>
+              <tr><td>State-space tree</td><td>binary tree of depth n</td><td>2<sup>n+1</sup> − 1 nodes</td></tr>
+              <tr><td>Work per node</td><td>two bound checks, O(1) (s and r passed along)</td><td>O(1)</td></tr>
+              <tr><td>Printing a solution</td><td>O(n) each</td><td>O(n · #solutions)</td></tr>
+              <tr><td><b>Total (worst case)</b></td><td>pruning does not change the bound</td><td><b>O(2<sup>n</sup>)</b> (O(n·2<sup>n</sup>) with output)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Worst case</span><span class="v">O(2ⁿ)</span><span class="faint" style="font-size:.86rem">full binary tree</span></div>
+          <div class="kbox"><span class="k">Typical</span><span class="v">far fewer nodes</span><span class="faint" style="font-size:.86rem">20 calls vs 127 nodes in the example</span></div>
+          <div class="kbox"><span class="k">Space</span><span class="v">O(n)</span><span class="faint" style="font-size:.86rem">x[] and recursion depth</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/subset-sum-problem-1611555638/1" target="_blank" rel="noopener">Subset Sum Problem</a></td><td><span class="chip medium">Medium</span></td><td>yes/no → DP</td></tr>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/subset-sums2234/1" target="_blank" rel="noopener">Subset Sums</a></td><td><span class="chip medium">Medium</span></td><td>all 2ⁿ sums, include/exclude</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/combination-sum-ii/" target="_blank" rel="noopener">40. Combination Sum II</a></td><td><span class="chip medium">Medium</span></td><td>this page with duplicates</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/subsets/" target="_blank" rel="noopener">78. Subsets</a></td><td><span class="chip medium">Medium</span></td><td>the full binary tree</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/partition-to-k-equal-sum-subsets/" target="_blank" rel="noopener">698. Partition to K Equal Sum Subsets</a></td><td><span class="chip medium">Medium</span></td><td>k subset sums at once</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1623" target="_blank" rel="noopener">1623 · Apple Division</a></td><td><span class="chip easy">Easy</span></td><td>closest to half</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="n-queens.html"><small>← Previous</small>05 · n-Queen</a>
+          <a class="next" href="index.html"><small>Back to →</small>Backtracking overview</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prim's Algorithm (MST) — Greedy · RecursionVerse</title>
+  <meta name="description" content="Prim's minimum spanning tree algorithm: grow one tree by always adding the cheapest edge leaving it. Worked example, code in C++/Java/Python, drawbacks and time complexity.">
+  <meta name="theme-color" content="#070913">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>try{var t=localStorage.getItem('rv-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header data-nav data-base="../" data-active="greedy"></header>
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumbs"><a href="../index.html">Home</a><span>/</span><a href="index.html">Greedy</a><span>/</span><span>Prim's MST</span></div>
+      <div class="eyebrow">Problem 06 · grow one tree</div>
+      <h1>Minimum Spanning Tree — Prim's Algorithm</h1>
+      <div class="chips mt-1"><span class="chip medium">Medium</span><span class="chip pink">greedy</span><span class="chip cyan">min-heap</span><span class="chip">O(E log V)</span></div>
+      <div class="platform-links mt-3">
+        <a class="plink" href="https://www.geeksforgeeks.org/problems/minimum-spanning-tree/1" target="_blank" rel="noopener"><span class="dot dot-gfg"></span>GFG · Minimum Spanning Tree</a>
+        <a class="plink" href="https://leetcode.com/problems/min-cost-to-connect-all-points/" target="_blank" rel="noopener"><span class="dot dot-lc"></span>LeetCode 1584</a>
+        <a class="plink" href="https://cses.fi/problemset/task/1675" target="_blank" rel="noopener"><span class="dot dot-cses"></span>CSES 1675 · Road Reparation</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-grid">
+    <aside class="toc" data-auto aria-label="On this page"></aside>
+    <main>
+      <section class="section-tight" id="problem" data-toc="Problem">
+        <h2>Problem</h2>
+        <p class="problem-statement prose">Given a <strong>connected, undirected, weighted</strong> graph G = (V, E), find a <strong>spanning tree</strong> — a subset of V − 1 edges that connects every vertex with no cycle — whose <strong>total weight is minimum</strong>. This is the <em>Minimum Spanning Tree (MST)</em>. Example uses: laying cable / pipelines / roads between cities at the least cost.</p>
+        <figure class="figure mt-2">
+<svg class="gsvg" viewBox="0 0 480 220" role="img" aria-label="Prim MST on the CLRS graph">
+<line class="e hot" x1="43" y1="99" x2="97" y2="51"/>
+<text class="w" x="77" y="83">4</text>
+<line class="e" x1="43" y1="121" x2="97" y2="169"/>
+<text class="w" x="63" y="153">8</text>
+<line class="e hot" x1="127" y1="40" x2="213" y2="40"/>
+<text class="w" x="170" y="51">8</text>
+<line class="e" x1="110" y1="57" x2="110" y2="163"/>
+<text class="w" x="99" y="110">11</text>
+<line class="e hot" x1="247" y1="40" x2="333" y2="40"/>
+<text class="w" x="290" y="51">7</text>
+<line class="e hot" x1="241" y1="53" x2="339" y2="167"/>
+<text class="w" x="282" y="117">4</text>
+<line class="e hot" x1="219" y1="53" x2="181" y2="97"/>
+<text class="w" x="192" y="68">2</text>
+<line class="e hot" x1="363" y1="50" x2="427" y2="100"/>
+<text class="w" x="388" y="84">9</text>
+<line class="e" x1="350" y1="57" x2="350" y2="163"/>
+<text class="w" x="339" y="110">14</text>
+<line class="e" x1="427" y1="120" x2="363" y2="170"/>
+<text class="w" x="388" y="136">10</text>
+<line class="e hot" x1="333" y1="180" x2="247" y2="180"/>
+<text class="w" x="290" y="169">2</text>
+<line class="e hot" x1="213" y1="180" x2="127" y2="180"/>
+<text class="w" x="170" y="169">1</text>
+<line class="e" x1="219" y1="167" x2="181" y2="123"/>
+<text class="w" x="208" y="138">6</text>
+<line class="e" x1="121" y1="167" x2="159" y2="123"/>
+<text class="w" x="148" y="152">7</text>
+<circle class="nd" cx="30" cy="110" r="16"/><text x="30" y="110">a</text>
+<circle class="nd" cx="110" cy="40" r="16"/><text x="110" y="40">b</text>
+<circle class="nd" cx="230" cy="40" r="16"/><text x="230" y="40">c</text>
+<circle class="nd" cx="350" cy="40" r="16"/><text x="350" y="40">d</text>
+<circle class="nd" cx="440" cy="110" r="16"/><text x="440" y="110">e</text>
+<circle class="nd" cx="350" cy="180" r="16"/><text x="350" y="180">f</text>
+<circle class="nd" cx="230" cy="180" r="16"/><text x="230" y="180">g</text>
+<circle class="nd" cx="110" cy="180" r="16"/><text x="110" y="180">h</text>
+<circle class="nd" cx="170" cy="110" r="16"/><text x="170" y="110">i</text>
+</svg>
+          <figcaption>CLRS graph. Green edges: the MST Prim builds from vertex a. Total weight = 37.</figcaption>
+        </figure>
+      </section>
+
+      <section class="section" id="intuition" data-toc="Intuition">
+        <h2>Intuition</h2>
+        <div class="prose">
+          <p>Start with a single vertex. The tree is one "island". To grow it, you must eventually build some bridge from the island to the rest of the graph — so build the <strong>cheapest bridge</strong> available right now. Add the new vertex to the island and repeat until every vertex is on it.</p>
+          <p>This is safe because of the <strong>cut property</strong>: for any split of the vertices into two groups (a <em>cut</em>), the lightest edge crossing the cut belongs to some MST. The island and the rest form such a cut.</p>
+        </div>
+        <div class="callout info mt-2"><span class="ic">i</span><p>Prim looks like Dijkstra. The only difference is the key: Dijkstra uses <em>distance from the source</em> (<code>d[u] + w</code>), Prim uses <em>the single edge weight</em> to the tree (<code>w</code>).</p></div>
+      </section>
+
+      <section class="section" id="technique" data-toc="Technique">
+        <h2>Solution technique</h2>
+        <div class="dry">
+          <div class="d"><span>Set <code>key[v] = ∞</code> for every vertex, <code>key[r] = 0</code> for the start r. <code>key[v]</code> = cheapest edge joining v to the tree so far.</span></div>
+          <div class="d"><span>Pick the vertex <code>u</code> not yet in the tree with the <strong>smallest key</strong>; add it (with edge <code>π[u]–u</code>).</span></div>
+          <div class="d"><span>For every neighbour <code>v</code> not in the tree: if <code>w(u, v) &lt; key[v]</code>, set <code>key[v] = w(u, v)</code> and <code>π[v] = u</code>.</span></div>
+          <div class="d"><span>Repeat until all V vertices are in the tree.</span></div>
+        </div>
+<script type="text/plain" data-clrs>
+MST-PRIM(G, w, r)
+    for each u ∈ G.V
+        u.key = ∞
+        u.π = NIL
+    r.key = 0
+    Q = G.V   // min-priority queue on key
+    while Q ≠ ∅
+        u = EXTRACT-MIN(Q)
+        for each v ∈ G.Adj[u]
+            if v ∈ Q and w(u, v) < v.key
+                v.π = u
+                v.key = w(u, v)   // DECREASE-KEY
+</script>
+        <div class="code-card mt-2">
+<script type="text/plain" data-lang="cpp">
+// adj[u] = list of {v, w}; returns total MST weight
+long long prim(int n, vector<vector<pair<int, int>>>& adj) {
+    vector<int> key(n, INT_MAX);
+    vector<bool> inTree(n, false);
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+    key[0] = 0;
+    pq.push({0, 0});
+    long long total = 0;
+    while (!pq.empty()) {
+        auto [k, u] = pq.top(); pq.pop();
+        if (inTree[u]) continue;          // stale entry
+        inTree[u] = true;
+        total += k;
+        for (auto [v, w] : adj[u])
+            if (!inTree[v] && w < key[v]) {
+                key[v] = w;
+                pq.push({w, v});
+            }
+    }
+    return total;
+}
+</script>
+<script type="text/plain" data-lang="java">
+static long prim(int n, List<List<int[]>> adj) {
+    int[] key = new int[n];
+    Arrays.fill(key, Integer.MAX_VALUE);
+    boolean[] inTree = new boolean[n];
+    PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[0] - b[0]);
+    key[0] = 0;
+    pq.add(new int[]{0, 0});
+    long total = 0;
+    while (!pq.isEmpty()) {
+        int[] top = pq.poll();
+        int u = top[1];
+        if (inTree[u]) continue;
+        inTree[u] = true;
+        total += top[0];
+        for (int[] e : adj.get(u)) {
+            int v = e[0], w = e[1];
+            if (!inTree[v] && w < key[v]) {
+                key[v] = w;
+                pq.add(new int[]{w, v});
+            }
+        }
+    }
+    return total;
+}
+</script>
+<script type="text/plain" data-lang="python">
+import heapq
+
+def prim(adj, start):
+    # adj: {u: [(v, w), ...]} for an undirected graph
+    in_tree, total, edges = set(), 0, []
+    pq = [(0, start, None)]
+    while pq:
+        w, u, parent = heapq.heappop(pq)
+        if u in in_tree:
+            continue
+        in_tree.add(u)
+        total += w
+        if parent is not None:
+            edges.append((parent, u, w))
+        for v, wv in adj[u]:
+            if v not in in_tree:
+                heapq.heappush(pq, (wv, v, u))
+    return total, edges
+</script>
+        </div>
+      </section>
+
+      <section class="section" id="example" data-toc="Worked example">
+        <h2>Worked example — start at a</h2>
+        <p class="muted">Edges: a–b 4, a–h 8, b–c 8, b–h 11, c–d 7, c–f 4, c–i 2, d–e 9, d–f 14, e–f 10, f–g 2, g–h 1, g–i 6, h–i 7.</p>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Step</th><th>Add vertex</th><th>Via edge</th><th>Keys updated (for vertices still outside)</th><th>Weight so far</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>a</td><td>start</td><td>b = 4, h = 8</td><td>0</td></tr>
+              <tr><td>2</td><td>b</td><td class="hl">a–b 4</td><td>c = 8 (h stays 8, since 11 &gt; 8)</td><td>4</td></tr>
+              <tr><td>3</td><td>c</td><td class="hl">b–c 8</td><td>d = 7, f = 4, i = 2</td><td>12</td></tr>
+              <tr><td>4</td><td>i</td><td class="hl">c–i 2</td><td>g = 6, h = 7</td><td>14</td></tr>
+              <tr><td>5</td><td>f</td><td class="hl">c–f 4</td><td>g = 2, e = 10</td><td>18</td></tr>
+              <tr><td>6</td><td>g</td><td class="hl">f–g 2</td><td>h = 1</td><td>20</td></tr>
+              <tr><td>7</td><td>h</td><td class="hl">g–h 1</td><td>—</td><td>21</td></tr>
+              <tr><td>8</td><td>d</td><td class="hl">c–d 7</td><td>e = 9</td><td>28</td></tr>
+              <tr><td>9</td><td>e</td><td class="hl">d–e 9</td><td>—</td><td class="hl">37</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted mt-2"><strong>MST weight = 37</strong>, with V − 1 = 8 edges. In step 3 there was a tie (b–c 8 and a–h 8); choosing a–h gives a different tree with the same weight 37 — see <a href="kruskal.html">Kruskal</a>.</p>
+      </section>
+
+      <section class="section" id="practice" data-toc="Practice">
+        <h2>Practice problems</h2>
+        <details class="ex"><summary><span class="qn">P1</span><span class="q">Undirected graph (from the Greedy notes): 0–3 6, 0–4 5, 1–2 9, 1–3 5, 1–5 1, 1–6 9, 2–6 7, 3–7 9, 4–6 4, 5–7 2, 6–7 7. Run Prim from vertex 3.</span></summary>
+          <div class="ans"><p>Order: 3 → 1 (5) → 5 (1) → 7 (2) → 0 (6) → 4 (5) → 6 (4) → 2 (7).</p>
+            <p>Edges: 3–1, 1–5, 5–7, 3–0, 0–4, 4–6, 6–2. <strong>MST weight = 5 + 1 + 2 + 6 + 5 + 4 + 7 = 30.</strong></p></div></details>
+        <details class="ex"><summary><span class="qn">P2</span><span class="q">Does the starting vertex change the MST weight?</span></summary>
+          <div class="ans"><p>No. Every MST has the same total weight. The start can change <em>which</em> tree you get only when there are equal-weight edges.</p></div></details>
+        <details class="ex"><summary><span class="qn">P3</span><span class="q">When is the MST unique?</span></summary>
+          <div class="ans"><p>If all edge weights are distinct, the MST is unique. With ties there may be several MSTs, all of equal weight.</p></div></details>
+        <details class="ex"><summary><span class="qn">P4</span><span class="q">How would you find a <em>maximum</em> spanning tree?</span></summary>
+          <div class="ans"><p>Negate all weights (or use a max-heap) and run the same algorithm.</p></div></details>
+      </section>
+
+      <section class="section" id="drawbacks" data-toc="Drawbacks">
+        <h2>Drawbacks</h2>
+        <div class="callout bad"><span class="ic">✗</span><p><strong>Graph must be connected.</strong> On a disconnected graph Prim only spans the start vertex's component (run it once per component to get a minimum spanning forest).</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Undirected graphs only.</strong> For directed graphs the analogous problem (minimum arborescence) needs the Chu–Liu/Edmonds algorithm.</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>Needs a priority queue</strong> for good performance on sparse graphs; with an array it is O(V²).</p></div>
+        <div class="callout warn"><span class="ic">!</span><p><strong>MST ≠ shortest paths.</strong> The path between two vertices inside the MST is not necessarily their shortest path.</p></div>
+      </section>
+
+      <section class="section" id="complexity" data-toc="Time complexity">
+        <h2>Time complexity in detail</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Operation</th><th>Times executed</th><th>Binary heap</th><th>Array (adjacency matrix)</th></tr></thead>
+            <tbody>
+              <tr><td>Initialise keys, build Q</td><td>once</td><td>O(V)</td><td>O(V)</td></tr>
+              <tr><td>EXTRACT-MIN</td><td>V times</td><td>O(log V) each → O(V log V)</td><td>O(V) each → O(V²)</td></tr>
+              <tr><td>Scan adjacency lists</td><td>2E entries in total</td><td>O(E)</td><td>O(V²) for the matrix</td></tr>
+              <tr><td>DECREASE-KEY</td><td>≤ E times</td><td>O(log V) each → O(E log V)</td><td>O(1) each</td></tr>
+              <tr><td><b>Total</b></td><td></td><td><b>O((V + E) log V) = O(E log V)</b></td><td><b>O(V²)</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-3 mt-2">
+          <div class="kbox"><span class="k">Sparse graph</span><span class="v">O(E log V)</span><span class="faint" style="font-size:.86rem">binary heap</span></div>
+          <div class="kbox"><span class="k">Dense graph</span><span class="v">O(V²)</span><span class="faint" style="font-size:.86rem">array — best when E ≈ V²</span></div>
+          <div class="kbox"><span class="k">Fibonacci heap</span><span class="v">O(E + V log V)</span><span class="faint" style="font-size:.86rem">DECREASE-KEY in O(1) amortised</span></div>
+        </div>
+      </section>
+
+      <section class="section" id="similar" data-toc="Similar problems">
+        <h2>Similar problems</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Platform</th><th>Problem</th><th>Level</th><th>How it maps</th></tr></thead>
+            <tbody>
+              <tr><td><span class="plat">GFG</span></td><td><a href="https://www.geeksforgeeks.org/problems/minimum-spanning-tree/1" target="_blank" rel="noopener">Minimum Spanning Tree</a></td><td><span class="chip medium">Medium</span></td><td>this page</td></tr>
+              <tr><td><span class="plat">LeetCode</span></td><td><a href="https://leetcode.com/problems/min-cost-to-connect-all-points/" target="_blank" rel="noopener">1584. Min Cost to Connect All Points</a></td><td><span class="chip medium">Medium</span></td><td>complete graph → O(V²) Prim</td></tr>
+              <tr><td><span class="plat">CSES</span></td><td><a href="https://cses.fi/problemset/task/1675" target="_blank" rel="noopener">1675 · Road Reparation</a></td><td><span class="chip easy">Easy</span></td><td>MST or IMPOSSIBLE</td></tr>
+              <tr><td><span class="plat">SPOJ</span></td><td><a href="https://www.spoj.com/problems/MST/" target="_blank" rel="noopener">MST · Minimum Spanning Tree</a></td><td><span class="chip easy">Easy</span></td><td>plain MST</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <a href="dijkstra.html"><small>← Previous</small>05 · Dijkstra</a>
+          <a class="next" href="kruskal.html"><small>Next problem →</small>07 · Kruskal's MST</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer data-footer data-base="../"></footer>
+  <script src="../assets/js/core.js"></script>
+</body>
+</html>

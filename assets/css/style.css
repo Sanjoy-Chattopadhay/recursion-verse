@@ -983,3 +983,11 @@ pre.code .ln[data-quiet]::after { display: none; }
 .gsvg .arrow.hot { fill: var(--good); }
 .table td.hl, .table th.hl { color: var(--good); font-weight: 700; }
 .table td.x { color: var(--text-faint); text-decoration: line-through; }
+.chip.amber { color: var(--amber); background: var(--amber-soft); border-color: transparent; }
+.matrix td, .matrix th { text-align: center; font-family: var(--font-mono); }
+.matrix td.chg { color: var(--good); font-weight: 700; background: var(--good-soft); }
+.matrix td.piv { background: var(--accent-soft); }
+.board { display: inline-grid; grid-template-columns: repeat(var(--n), 34px); border: 2px solid var(--border-strong); border-radius: 6px; overflow: hidden; }
+.board span { width: 34px; height: 34px; display: grid; place-items: center; font-size: 1.2rem; background: var(--surface); }
+.board span.dk { background: var(--surface-3); }
+.board span.q { color: var(--accent-3); font-weight: 700; }
